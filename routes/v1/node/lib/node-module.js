@@ -28,7 +28,8 @@ var OperateModule = function(req){
             paramArray = {
                 nodeId:{type:"[object String]",default:"default",choosable:false},
                 AppKey:{type:"[object String]",default:"default",choosable:false},
-                nodeInfo:{type:"[object String]",default:"default",choosable:false}
+                nodeInfo:{type:"[object String]",default:"default",choosable:true},
+                protocol:{type:"[object String]",default:"default",choosable:true}
             };
             for (var i in paramArray) {
                 paramArray[i].value = req.body[i] == undefined ? paramArray[i]["default"] : req.body[i];
@@ -127,13 +128,19 @@ var OperateModule = function(req){
             var nodeId = that.paramArray.nodeId.value;
             var AppKey = that.paramArray.AppKey.value;
             var nodeInfo = that.paramArray.nodeInfo.value;
+            var protocol = that.paramArray.protocol.value;
             console.log('device management# nodeId AppKey nodeInfo',nodeId,AppKey,nodeInfo);
             var NodeInfoObject = AV.Object.extend('NodeInfo');
             var NewNodeInfoObject = new NodeInfoObject();
             NewNodeInfoObject.set('nodeId',nodeId);
             NewNodeInfoObject.set('AppKey',AppKey);
-            if(typeof nodeInfo != 'default'){
-                NewNodeInfoObject.set('nodeInfo',nodeInfo);
+            NewNodeInfoObject.set('WLAN','Unsupport');
+            NewNodeInfoObject.set('Operator','Unsupport');
+            if(nodeInfo != 'default'){
+                NewNodeInfoObject.set('NodeInfo',nodeInfo);
+            }
+            if(protocol != 'default'){
+                NewNodeInfoObject.set('Protocol',nodeInfo);
             }
             var GroupUserMapQuery = new AV.Query('GroupUserMap');
             GroupUserMapQuery.find({'sessionToken':that.sessionToken}).then(function (result) {
@@ -149,7 +156,7 @@ var OperateModule = function(req){
                     throw new AV.Error('this user do not relate to Group');
                 }
             }).then(function () {
-                NewNodeInfoObject.save({'sessionToken':that.sessionToken}).then(function (todo) {
+                NewNodeInfoObject.save(null,{'sessionToken':that.sessionToken}).then(function (todo) {
                     console.log('device management# build up new nodeId successfully and objectId is ' + todo.id);
                     resolve('success')
                 });
@@ -201,10 +208,13 @@ var OperateModule = function(req){
                     return result[0]
                 }).then(function (updateObject) {
                     if(typeof current.nodeInfo != 'undefined'){
-                        updateObject.set('nodeInfo',current.nodeInfo);
+                        updateObject.set('NodeInfo',current.nodeInfo);
                     }
                     if(typeof current.AppKey != 'undefined'){
                         updateObject.set('AppKey',current.AppKey);
+                    }
+                    if(typeof current.protocol != 'undefined'){
+                        updateObject.set('Protocol',current.protocol);
                     }
                     callback(null,updateObject);
                 }).catch(function (error) {
