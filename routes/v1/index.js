@@ -6,6 +6,6 @@
 module.exports = function (app) {
 
     require('./node/index')(app);
-    require('./api')(app);
+    require('./login')(app);
 
 };
