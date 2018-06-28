@@ -10,34 +10,21 @@ var corsOptions = {
         callback(originIsWhitelisted ? null : 'Bad Request', originIsWhitelisted);
     }
 };
-
-// `AV.Object.extend` 方法一定要放在全局变量，否则会造成堆栈溢出。
-// 详见： https://leancloud.cn/docs/js_guide.html#对象
 router.options('/', cors(corsOptions));
 router.post('/', cors(corsOptions), function(req, res, next) {
     var username = req.body['username'];
     var password = req.body['password'];
-    var X_LC_Id = req.headers['x-lc-id'];
-    var X_LC_Sign = req.headers['x-lc-sign'];
-    var body = {
-        "username":username,
-        "password":password
-    };
-    var url = 'https://' + X_LC_Id.slice(0,7) + '.api.lncld.net/1.1/login';
-    request({
-        headers:{
-            "Content-Type": "application/json",
-            "X-LC-Id": X_LC_Id,
-            "X-LC-Sign": X_LC_Sign
-        },
-        url: url,
-        method: "POST",
-        json: true,
-        body: body
-    }, function(error, response, body) {
-        res.status(response.statusCode);
-        res.send(body);
-    });
+    AV.User.logIn(username,password).then(function(user){
+        var userinfo = user.toJSON();
+        userinfo.sessionToken = user._sessionToken;
+        console.log("Login# login success with user ", userinfo.username);
+        res.status(200);
+        res.send(userinfo);
+    }).catch(function(err){
+        console.error("Login# error",err);
+        res.status(err.code);
+        res.send(err.message);
+    })
 });
 
 module.exports = router;
