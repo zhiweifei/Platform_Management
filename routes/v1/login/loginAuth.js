@@ -13,10 +13,10 @@ var corsOptions = {
 
 router.options('/', cors(corsOptions));
 router.post('/', cors(corsOptions), function(req, res, next) {
-    var authPlatform = req.body("authPlatform");
-    var openid = req.body("openid");
-    var access_token = req.body("access_token");
-    var expires_in = req.body("expires_in");
+    var authPlatform = req.body["authPlatform"];
+    var openid = req.body["openid"];
+    var access_token = req.body["access_token"];
+    var expires_in = req.body["expires_in"];
     AV.User.loginWithAuthData({
           openid: openid,
           access_token: access_token,
