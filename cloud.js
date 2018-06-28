@@ -5,14 +5,10 @@ var setDataAcl = require('./routes/v1/lib/setAcl');
 var middleTable = require('./routes/v1/lib/middleTable');
 var superRoleName = 'super_admin';
 var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',undefined,true);
-var GroupNodeInfoMap_middleTable = new middleTable('GroupNodeInfoMap','Group','NodeInfo',undefined,true);
 var UserNodeInfoMap_middleTable = new middleTable('UserNodeInfoMap','User','NodeInfo',undefined,true);
 GroupUserMap_middleTable.afterSave();
 GroupUserMap_middleTable.beforeSave();
 GroupUserMap_middleTable.afterDelete('Group');
-GroupNodeInfoMap_middleTable.afterSave();
-GroupNodeInfoMap_middleTable.beforeSave();
-GroupNodeInfoMap_middleTable.afterDelete('Group');
 UserNodeInfoMap_middleTable.afterSave();
 UserNodeInfoMap_middleTable.beforeSave();
 UserNodeInfoMap_middleTable.afterDelete('_User');
@@ -81,17 +77,19 @@ AV.Cloud.afterDelete('OperatorInfo', function(request) {
 AV.Cloud.afterSave('Group', function(request) {
     var GroupObjectId = request.object.id;
     if(!GroupObjectId){
-        throw new AV.Cloud.Error('firefight cloud# Group afterSave No Group ObjectId!');
+        throw new AV.Cloud.Error('AccessLink-Platform cloud# Group afterSave No Group ObjectId!');
     }
     else{
         var newRole = AV.Object.extend('_Role');
         var buildGroupRole = new newRole();
         var newGroupRoleName = 'group_admin_' + GroupObjectId;
         buildGroupRole.set('name',newGroupRoleName);
+        buildGroupRole.set('Group', request.object);
         buildGroupRole.setACL(setDataAcl([superRoleName,newGroupRoleName]));
         var buildGroupAdminRole = new newRole();
         var newGroupAdminRoleName = 'admin_' + GroupObjectId;
         buildGroupAdminRole.set('name',newGroupAdminRoleName);
+        buildGroupAdminRole.set('Group', request.object);
         buildGroupAdminRole.setACL(setDataAcl([superRoleName,newGroupRoleName,newGroupAdminRoleName]));
         var GroupObject = AV.Object.createWithoutData('Group', GroupObjectId);
         GroupObject.set('ACL',setDataAcl([superRoleName,newGroupRoleName]));
@@ -99,7 +97,7 @@ AV.Cloud.afterSave('Group', function(request) {
         GroupObject.disableBeforeHook();
         GroupObject.disableAfterHook();
         AV.Object.saveAll([buildGroupRole,buildGroupAdminRole,GroupObject],{'useMasterKey':true}).then(function (result) {
-            console.log("firefight cloud# Group afterSave set new Group Role success",result);
+            console.log("AccessLink-Platform cloud# Group afterSave set new Group Role success",result);
             //result[0] is group_admin role
             //result[1] is admin role
             result[1].getRoles().add(result[1]);
@@ -107,7 +105,7 @@ AV.Cloud.afterSave('Group', function(request) {
             result[0].getRoles().add(result[0]);
             return AV.Object.saveAll([result[0],result[1]],{useMasterKey:true})
         }).catch(function (error) {
-            console.error("firefight cloud# Group afterSave set new Group Role failed",error)
+            console.error("AccessLink-Platform cloud# Group afterSave set new Group Role failed",error)
         });
     }
 });
@@ -120,8 +118,7 @@ AV.Cloud.beforeDelete('Group',function (request) {
     userQuery.containedIn('name', [GroupRoleName, GroupAdminRoleName]);
     return Promise.all([
         userQuery.find({useMasterKey:true}),
-        GroupUserMap_middleTable.findData(request.object),
-        GroupNodeInfoMap_middleTable.findData(request.object)
+        GroupUserMap_middleTable.findData(request.object)
     ]).then(function (result) {
         var deleteObject = [];
         result.forEach(function (current) {
@@ -138,7 +135,6 @@ AV.Cloud.beforeDelete('Group',function (request) {
 AV.Cloud.beforeDelete('NodeInfo',function (request) {
     console.log("#cloud delete NodeInfo request.object",request.object);
     return Promise.all([
-        GroupNodeInfoMap_middleTable.findData(undefined,request.object),
         UserNodeInfoMap_middleTable.findData(undefined,request.object)
     ]).then(function (result) {
         var deleteObject = [];
