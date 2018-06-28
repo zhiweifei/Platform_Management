@@ -11,8 +11,10 @@ function groupInterface(req) {
 
     var that = this;
     this.sessionToken = req.headers["sessiontoken"];
+    AV.User.become(this.sessionToken).then((user)=>{
+        that.login_username = user.toJSON().username
+    })
 
-    var GroupNodeInfoMap_middleTable = new middleTable('GroupNodeInfoMap','Group','NodeInfo',this.sessionToken);
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',this.sessionToken);
 
     switch (req.method){
@@ -96,34 +98,6 @@ function groupInterface(req) {
         return queryGroup.count({'sessionToken': this.sessionToken})
     };
 
-    var relate_GroupToNode = function (nodeId,newGroup) {
-        var addObject = [];
-        return new Promise(function (resolve,reject) {
-            if(nodeId.length >0) {
-                transformToObject(nodeId, 'NodeInfo', 'nodeId', that.sessionToken).then(function (objectNodeIds) {
-                    console.log('AccessLink-Platform /group/post#add_nodeids objectNodeIds', objectNodeIds);
-                    //make sure all nodeIds are right and transformToObject successfully
-                    if (objectNodeIds.length > 0 && objectNodeIds.length == nodeId.length) {
-                        objectNodeIds.forEach(function (current_nodeId) {
-                            addObject.push(GroupNodeInfoMap_middleTable.buildOneData(newGroup, current_nodeId));
-                        });
-                        resolve(addObject);
-                    }
-                    else {
-                        reject(new AV.Error(403, 'Invalid nodeId'))
-                    }
-                }).catch(function (err) {
-                    console.error("AccessLink-Platform /group/post# add_nodeids transformToObject error", err);
-                    reject(new AV.Error(401, 'there is a server error'))
-                })
-            }
-            else{
-                resolve([])
-            }
-        });
-
-    };
-
     var relate_GroupToUser = function (User,newGroup) {
 
         var addObject = [];
@@ -153,7 +127,7 @@ function groupInterface(req) {
 
     };
 
-    var relate_UserToRole = function (User,ObjectId) {
+    var relate_UserToRole = function (User,ObjectId,admin) {
         var allUser;
         return new Promise(function (resolve, reject) {
             transformToObject(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
@@ -161,7 +135,7 @@ function groupInterface(req) {
                 if(objectUsers.length >0){
                     allUser = objectUsers;
                     var roleQuery = new AV.Query(AV.Role);
-                    roleQuery.equalTo('name', 'admin_' + ObjectId);
+                    roleQuery.equalTo('name', admin + ObjectId);
                     return roleQuery.find({'sessionToken': that.sessionToken})
                 }
                 else{
@@ -202,7 +176,6 @@ function groupInterface(req) {
 
         return new Promise(function (resolve,reject) {
             var groupInfo = currentBuild.groupInfo;
-            var related_NodeId = currentBuild.nodeId;
             var related_user = currentBuild.user;
             var bodyName = currentBuild.name;
             if(typeof bodyName == 'undefined'){
@@ -211,21 +184,9 @@ function groupInterface(req) {
             var GroupObject = AV.Object.extend('Group');
             var NewGroup = new GroupObject();
             NewGroup.set('name', bodyName);
-            var ownNodeId = false;
             var ownUser = false;
             if (typeof groupInfo != 'undefined') {
                 NewGroup.set('groupInfo', groupInfo);
-            }
-            if (Array.isArray(related_NodeId)) {
-                if(related_NodeId.length == 0)
-                    reject(new AV.Error(403,'Invalid nodeId'));
-                else
-                    ownNodeId = true;
-            }
-            else{
-                if(typeof related_NodeId != 'undefined') {
-                    throw new AV.Error(403,'Invalid nodeId');
-                }
             }
 
             if (Array.isArray(related_user)) {
@@ -242,12 +203,10 @@ function groupInterface(req) {
             }
             NewGroup.save(null,{'sessionToken': that.sessionToken}).then(function (NewGroupObject) {
                 var buildObject = [];
-                if(ownNodeId == true){
-                    buildObject.push(relate_GroupToNode(related_NodeId, NewGroupObject))
-                }
                 if(ownUser == true){
-                    buildObject.push(relate_GroupToUser(related_user, NewGroupObject));
-                    buildObject.push(relate_UserToRole(related_user, NewGroupObject.id))
+                    buildObject.push(relate_GroupToUser(related_user.concat(that.login_username), NewGroupObject));
+                    buildObject.push(relate_UserToRole(related_user, NewGroupObject.id, "admin_"));
+                    buildObject.push(relate_UserToRole([that.login_username], NewGroupObject.id, "group_admin_"))
                 }
                 return Promise.all(buildObject).then(function (result) {
                     var addObject = [];
@@ -256,7 +215,7 @@ function groupInterface(req) {
                             addObject = addObject.concat(current)
                     });
                     return AV.Object.saveAll(addObject,{'sessionToken': that.sessionToken}).then(function () {
-                        resolve("success, relate to users or nodeIds successfully");
+                        resolve("success, relate to users successfully");
                     });
                 })
             }).catch(function (error) {
@@ -275,13 +234,10 @@ function groupInterface(req) {
                         reject(new AV.Error(401, 'no authority to build up group'));
                     }
                     else if (error.message.indexOf('this middle table data already exist') > -1) {
-                        reject(new AV.Error(401,'this group have already relate to these users or nodeIds'))
+                        reject(new AV.Error(401,'this group have already relate to these users'))
                     }
                     else if(error.message.indexOf('Invalid user')>-1){
                         reject(new AV.Error(403, 'Invalid user'));
-                    }
-                    else if(error.message.indexOf('Invalid nodeId')>-1){
-                        reject(new AV.Error(403, 'Invalid nodeId'));
                     }
                     else {
                         reject(new AV.Error(401, 'there is a server error'));
@@ -330,41 +286,6 @@ function groupInterface(req) {
         })
 
     };
-    var find_delete_GroupNodeInfo = function (nodeId,currentGroup) {
-
-        return new Promise(function (resolve,reject) {
-            if(nodeId.length > 0) {
-                //get all nodeIds object by transformToObject function
-                transformToObject(nodeId, 'NodeInfo', 'nodeId', that.sessionToken).then(function (objectNodeIds) {
-                    async.map(objectNodeIds, function (currentNodeId, callback) {
-                        // find the object which need to deleted in GroupNodeInfoMap table
-                        GroupNodeInfoMap_middleTable.findData(currentGroup, currentNodeId).then(function (result) {
-                            if (result.length == 0) {
-                                reject(new AV.Error(404, 'error,could not find delete data'));
-                            }
-                            else {
-                                callback(null, result[0]);
-                            }
-                        }, function (error) {
-                            console.error('AccessLink-Platform /group/put#  find_delete_nodeids error', error)
-                            reject(new AV.Error(401, 'there is a server error'))
-                        });
-                    }, function (err, result) {
-                        //add all delete nodeIds object in deleteObject
-                        console.error('AccessLink-Platform /group/put#  find_delete_nodeids result', result)
-                        resolve(result);
-                    });
-                }, function (error) {
-                    reject(new AV.Error(401, 'there is a server error'))
-                })
-            }
-            else{
-                resolve([])
-            }
-
-        })
-
-    };
 
     var dealEachGroup = function (current) {
 
@@ -372,7 +293,6 @@ function groupInterface(req) {
             var currentGroupObject;
             var GroupOldName = current.name;
             var GroupNewName = current.newName;
-            var newNodeIdArr = current.nodeId;
             var newUserArr = current.user;
             var groupInfo = current.groupInfo;
             //get group object by group name filed
@@ -394,13 +314,6 @@ function groupInterface(req) {
                     currentGroupObject.set('groupInfo', groupInfo);
                 }
                 addObject.push(currentGroupObject);
-                if(Array.isArray(newNodeIdArr))
-                    dealObject.push(dealNewNodeIdArr(currentGroupObject,newNodeIdArr))
-                else {
-                    if(typeof newNodeIdArr != 'undefined') {
-                        reject(new AV.Error(403, 'Invalid nodeId'));
-                    }
-                }
                 if(Array.isArray(newUserArr))
                     dealObject.push(dealNewUserArr(currentGroupObject,newUserArr))
                 else {
@@ -408,12 +321,12 @@ function groupInterface(req) {
                         reject(new AV.Error(403, 'Invalid user'));
                     }
                 }
-                //judge whether newNodeIdArr,newUserArr,groupInfo At least one
-                if(typeof newNodeIdArr == 'undefined' && typeof newUserArr == 'undefined'
-                    && typeof groupInfo == 'undefined' && typeof GroupNewName == 'undefined'){
-                    reject(new AV.Error(403,'error,newNodeIdArr,newUserArr,groupInfo,GroupNewName At least one'));
+                //judge whether newUserArr,groupInfo At least one
+                if(typeof newUserArr == 'undefined' && typeof groupInfo == 'undefined' && 
+                    typeof GroupNewName == 'undefined'){
+                    reject(new AV.Error(403,'error,newUserArr,groupInfo,GroupNewName At least one'));
                 }
-                // deal with the users and nodeIds in updateInfo
+                // deal with the users in updateInfo
                 Promise.all(dealObject).then(function(result) {
                     result.forEach(function (current) {
                         if(current[0].length>0)
@@ -456,39 +369,6 @@ function groupInterface(req) {
                     },function (error) {
                         reject(error)
                     })
-
-                })
-            },function (error) {
-                reject(new AV.Error(401,'there is a server error'))
-            });
-        })
-    };
-
-    var dealNewNodeIdArr = function (currentGroupObject,newNodeIdArr) {
-
-        return new Promise(function (resolve,reject) {
-            GroupNodeInfoMap_middleTable.findData(currentGroupObject).then(function (AllNode) {
-                console.log("AccessLink-Platform /group/put# oldNodeIdArr,newNodeIdArr", AllNode);
-                async.map(AllNode, function (current, callback) {
-                    var UserQuery = new AV.Query('NodeInfo');
-                    UserQuery.get(current.get('NodeInfo').id,{'sessionToken': that.sessionToken}).then(function (result) {
-                        callback(null, result.get('nodeId'))
-                    }, function (error) {
-                        reject(new AV.Error(401,'there is a server error'))
-                    });
-                }, function (err, oldNodeIdArr) {
-                    console.log("AccessLink-Platform /group/put# oldNodeIdArr,newNodeIdArr", oldNodeIdArr,newNodeIdArr);
-                    var NodeIdDifference = ArrayFindDifference(oldNodeIdArr, newNodeIdArr);
-                    console.log("AccessLink-Platform /group/put# NodeIdDifference", NodeIdDifference);
-                    Promise.all([
-                        find_delete_GroupNodeInfo(NodeIdDifference.deleteArr, currentGroupObject),
-                        relate_GroupToNode(NodeIdDifference.addArr, currentGroupObject)
-                    ]).then(function (result) {
-                        console.log("AccessLink-Platform /group/put# dealNewNodeIdArr",result)
-                        resolve(result)
-                    },function (error) {
-                        reject(error)
-                    });
 
                 })
             },function (error) {
@@ -546,7 +426,7 @@ function groupInterface(req) {
                             reject(new AV.Error(403, 'Invalid groupInfo'));
                         }
                         else if (error.message.indexOf('this middle table data already exist') > -1) {
-                            reject(new AV.Error(401,'this group have already relate to these users or nodeIds'))
+                            reject(new AV.Error(401,'this group have already relate to these users'))
                         }
                         else if (error.message.indexOf('Forbidden to update by class') > -1) {
                             reject(new AV.Error(401, 'no authority to update group'));

@@ -45,7 +45,7 @@ router.post('/', cors(corsOptions), function(req, res, next) {
         return GM.buildAllGroup();
     }).then(function () {
         res.status(201);
-        res.send("success, relate to users or nodeIds successfully");
+        res.send("success, relate to users successfully");
     }).catch(function (error) {
         console.error('Group# post error',error);
         res.status(error.code);
