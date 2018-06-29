@@ -158,7 +158,11 @@ function groupInterface(req) {
         return new Promise(function (resolve,reject) {
             var postInfo = that.paramArray.body.value;
             async.map(postInfo,function (current,callback) {
-                buildUpOneGroup(current).then(function (result) {
+                buildUpOneGroup(current).then(function(arr){
+                    return relateAfterBuildGroup(arr[0],arr[1],arr[2])
+                }).catch(function(error){
+                    return dealBuildGroupErr(error)
+                }).then(function (result) {
                     callback(null,result)
                 },function (error) {
                     reject(error)
@@ -198,56 +202,66 @@ function groupInterface(req) {
                     throw new AV.Error(403,'Invalid user');
                 }
             }
-            NewGroup.save(null,{'sessionToken': that.sessionToken}).then(function (NewGroupObject) {
-                var buildObject = [];
-                if(ownUser == true){
-                    buildObject.push(relate_GroupToUser(related_user.concat(that.login_username), NewGroupObject));
-                    buildObject.push(relate_UserToRole(related_user, NewGroupObject.id, "admin_"));
-                    buildObject.push(relate_UserToRole([that.login_username], NewGroupObject.id, "group_admin_"))
-                }
-                return Promise.all(buildObject).then(function (result) {
-                    var addObject = [];
-                    result.forEach(function (current) {
-                        if(current.length>0)
-                            addObject = addObject.concat(current)
-                    });
-                    return AV.Object.saveAll(addObject,{'sessionToken': that.sessionToken}).then(function () {
-                        resolve("success, relate to users successfully");
-                    });
-                })
-            }).catch(function (error) {
-                console.error('AccessLink-Platform /group/post#  build up group error',error);
-                if(error.hasOwnProperty('message')) {
-                    if (error.message.indexOf('A unique field was given a value that is already taken') > -1) {
-                        reject(new AV.Error(403, 'The group name is occupied'));
-                    }
-                    else if (error.message.indexOf("Invalid value type for field 'name'") > -1) {
-                        reject(new AV.Error(403, 'Invalid group name'));
-                    }
-                    else if (error.message.indexOf("Invalid value type for field 'groupInfo'") > -1) {
-                        reject(new AV.Error(403, 'Invalid groupInfo'));
-                    }
-                    else if (error.message.indexOf('Forbidden to create by class') > -1) {
-                        reject(new AV.Error(401, 'no authority to build up group'));
-                    }
-                    else if (error.message.indexOf('this middle table data already exist') > -1) {
-                        reject(new AV.Error(401,'this group have already relate to these users'))
-                    }
-                    else if(error.message.indexOf('Invalid user')>-1){
-                        reject(new AV.Error(403, 'Invalid user'));
-                    }
-                    else {
-                        reject(new AV.Error(401, 'there is a server error'));
-                    }
-                }
-                else{
-                    reject(new AV.Error(401, 'there is a server error'));
-                }
-            });
+            NewGroup.save(null,{'sessionToken': that.sessionToken}).then(function(NewGroupObject){
+                resolve([NewGroupObject,related_user,ownUser])
+            }).catch(function(error){
+                reject(error)
+            })
 
         })
 
     };
+
+    var relateAfterBuildGroup = function (NewGroupObject,related_user,ownUser){
+        var buildObject = [];
+        if(ownUser == true){
+            buildObject.push(relate_GroupToUser(related_user.concat(that.login_username), NewGroupObject));
+            buildObject.push(relate_UserToRole(related_user, NewGroupObject.id, "admin_"));
+            buildObject.push(relate_UserToRole([that.login_username], NewGroupObject.id, "group_admin_"))
+        }
+        return Promise.all(buildObject).then(function (result) {
+            var addObject = [];
+            result.forEach(function (current) {
+                if(current.length>0)
+                    addObject = addObject.concat(current)
+            });
+            return AV.Object.saveAll(addObject,{'sessionToken': that.sessionToken}).then(function () {
+                return "success, relate to users successfully";
+            }).catch(function(error){
+                throw error
+            });
+        })
+    }
+
+    var dealBuildGroupErr= function(error){
+            console.error('AccessLink-Platform /group/post#  build up group error',error);
+            if(error.hasOwnProperty('message')) {
+                if (error.message.indexOf('A unique field was given a value that is already taken') > -1) {
+                    throw(new AV.Error(403, 'The group name is occupied'));
+                }
+                else if (error.message.indexOf("Invalid value type for field 'name'") > -1) {
+                    throw(new AV.Error(403, 'Invalid group name'));
+                }
+                else if (error.message.indexOf("Invalid value type for field 'groupInfo'") > -1) {
+                    throw(new AV.Error(403, 'Invalid groupInfo'));
+                }
+                else if (error.message.indexOf('Forbidden to create by class') > -1) {
+                    throw(new AV.Error(401, 'no authority to build up group'));
+                }
+                else if (error.message.indexOf('this middle table data already exist') > -1) {
+                    throw(new AV.Error(401,'this group have already relate to these users'))
+                }
+                else if(error.message.indexOf('Invalid user')>-1){
+                    throw(new AV.Error(403, 'Invalid user'));
+                }
+                else {
+                    throw(new AV.Error(401, 'there is a server error'));
+                }
+            }
+            else{
+                throw(new AV.Error(401, 'there is a server error'));
+            }
+    }
 
     var find_delete_GroupUser = function (User,currentGroup) {
 
