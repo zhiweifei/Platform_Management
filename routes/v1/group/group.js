@@ -38,7 +38,9 @@ router.get('/', cors(corsOptions), function(req, res, next) {
 
 router.post('/', cors(corsOptions), function(req, res, next) {
     var GM = new group_module(req);
-    AV.User.become(GM.sessionToken).catch(function () {
+    AV.User.become(GM.sessionToken).then((user)=>{
+        GM.login_username = user.toJSON().username
+    }).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
         GM.typeCheck();

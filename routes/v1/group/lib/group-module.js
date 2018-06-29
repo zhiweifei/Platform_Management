@@ -11,9 +11,6 @@ function groupInterface(req) {
 
     var that = this;
     this.sessionToken = req.headers["sessiontoken"];
-    AV.User.become(this.sessionToken).then((user)=>{
-        that.login_username = user.toJSON().username
-    })
 
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',this.sessionToken);
 
