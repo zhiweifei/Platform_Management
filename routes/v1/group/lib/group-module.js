@@ -159,7 +159,7 @@ function groupInterface(req) {
             var postInfo = that.paramArray.body.value;
             async.map(postInfo,function (current,callback) {
                 buildUpOneGroup(current).then(function(arr){
-                    return relateAfterBuildGroup(arr[0],arr[1],arr[2])
+                    return relateGroupRoleToUser(arr[0],arr[1],arr[2])
                 }).catch(function(error){
                     return dealBuildGroupErr(error)
                 }).then(function (result) {
@@ -212,7 +212,7 @@ function groupInterface(req) {
 
     };
 
-    var relateAfterBuildGroup = function (NewGroupObject,related_user,ownUser){
+    var relateGroupRoleToUser = function (NewGroupObject,related_user,ownUser){
         var buildObject = [];
         if(ownUser == true){
             buildObject.push(relate_GroupToUser(related_user.concat(that.login_username), NewGroupObject));
