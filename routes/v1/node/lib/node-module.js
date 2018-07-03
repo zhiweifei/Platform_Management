@@ -129,7 +129,7 @@ var OperateModule = function(req){
             var AppKey = that.paramArray.AppKey.value;
             var nodeInfo = that.paramArray.nodeInfo.value;
             var protocol = that.paramArray.protocol.value;
-            console.log('device management# nodeId AppKey nodeInfo',nodeId,AppKey,nodeInfo);
+            console.log('AccessLink-Platform_Management device management# nodeId AppKey nodeInfo',nodeId,AppKey,nodeInfo);
             var NodeInfoObject = AV.Object.extend('NodeInfo');
             var NewNodeInfoObject = new NodeInfoObject();
             NewNodeInfoObject.set('nodeId',nodeId);
@@ -145,7 +145,7 @@ var OperateModule = function(req){
             var GroupUserMapQuery = new AV.Query('GroupUserMap');
             GroupUserMapQuery.find({'sessionToken':that.sessionToken}).then(function (result) {
                 if(result.length > 0){
-                    console.log('device management# this user has related to Group',result[0]);
+                    console.log('AccessLink-Platform_Management device management# this user has related to Group',result[0]);
                     NewNodeInfoObject.set('Group',result[0].get('Group'));
                     // get GroupUserMap ACL and then set ACL for NodeInfo
                     return result[0].fetch({'includeACL':true},{'useMasterKey':true}).then(function (map) {
@@ -157,11 +157,11 @@ var OperateModule = function(req){
                 }
             }).then(function () {
                 NewNodeInfoObject.save(null,{'sessionToken':that.sessionToken}).then(function (todo) {
-                    console.log('device management# build up new nodeId successfully and objectId is ' + todo.id);
+                    console.log('AccessLink-Platform_Management device management# build up new nodeId successfully and objectId is ' + todo.id);
                     resolve('success')
                 });
             }).catch(function (error) {
-                console.error('device management# build up new nodeId ERROR',error);
+                console.error('AccessLink-Platform_Management device management# build up new nodeId ERROR',error);
                 if(error.hasOwnProperty('message')) {
                     if (error.message.indexOf('A unique field was given a value that is already taken') > -1) {
                         reject(new AV.Error(403, 'The nodeId is occupied'));
@@ -218,14 +218,14 @@ var OperateModule = function(req){
                     }
                     callback(null,updateObject);
                 }).catch(function (error) {
-                    console.error('device management# /node/put find error',error);
+                    console.error('AccessLink-Platform_Management device management# /node/put find error',error);
                     reject(new AV.Error(401,'there is a server error'))
                 })
             },function (error,result) {
                 AV.Object.saveAll(result,{'sessionToken':that.sessionToken}).then(function () {
                     resolve('success')
                 },function (error) {
-                    console.error('device management# /node/put save error',error);
+                    console.error('AccessLink-Platform_Management device management# /node/put save error',error);
                     if(error.hasOwnProperty('message')) {
                         if (error.message.indexOf("Invalid value type for field 'nodeInfo'") > -1) {
                             reject(new AV.Error(403, 'Invalid nodeInfo'));
@@ -260,7 +260,7 @@ var OperateModule = function(req){
                     resolve('delete NodeInfo successfully')
                 })
             }).catch(function (error) {
-                console.error('device management /node/delete error',error);
+                console.error('AccessLink-Platform_Management device management /node/delete error',error);
                 if(error.hasOwnProperty('message')) {
                     if (error.message.indexOf('Forbidden to delete by class') > -1) {
                         reject(new AV.Error(403, 'no authority to delete nodeInfo'));
