@@ -58,7 +58,7 @@ router.put('/', cors(corsOptions), function(req, res, next) {
     AV.User.become(UM.sessionToken).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
-        return UM.updateUser_personal_Info();
+        return UM.updateUser();
     }).then(function () {
         res.status(201);
         res.send("success, update user Info successfully");

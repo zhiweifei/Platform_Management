@@ -73,7 +73,6 @@ function userModule(req) {
         if(username.length >0){
             queryUser.containedIn('username', username);
         }
-        console.log(this.paramArray)
         if(typeof select != 'undefined'){
             queryUser.select(select)
         }
@@ -156,7 +155,6 @@ function userModule(req) {
                     AV.Object.saveAll(result,{useMasterKey: true}).then(function () {
                         resolve('success')
                     })
-                    // resolve(result)
                 })
             }).catch(function (error) {
                 console.error("AccessLink-Platform /user/group put remove_authority error",error);
@@ -170,9 +168,15 @@ function userModule(req) {
         return new Promise(function (resolve,reject) {
             var postInfo = that.paramArray.body.value;
             async.map(postInfo,function (current,callback) {
-                buildUpOneNewUser(current).then(function(currentBuildUser){
-                    if(currentBuildUser[0].group != undefined){
-                        return that.relateUserToGroup(currentBuildUser)
+                buildUpOneNewUser(current).then(function(newuser){
+                    if(current.group != undefined){
+                        return that.findGroup(current.group).then(function(groups){
+                            if(groups.length == 0){
+                                throw(new AV.Error(404, 'group not found'));
+                            }else{
+                                return that.relateUserToGroup(newuser, groups)
+                            }
+                        })
                     }
                 }).then(function (result) {
                     callback(null,result)
@@ -235,7 +239,7 @@ function userModule(req) {
                 result.setACL(setDataAcl(AclArr,[result.id]));
                 return result.save(null,{useMasterKey: true});
             }).then(function (newuser) {
-                resolve([currentBuild, newuser])
+                resolve(newuser)
             }).catch(function (error) {
                 console.error('AccessLink-Platform /user#  build up new user error',error);
                 if(error.hasOwnProperty('message')) {
@@ -279,33 +283,81 @@ function userModule(req) {
         })
     }
 
-    this.relateUserToGroup = function(currentBuildUser){
+    this.findGroup  = function(groupName){
         return new Promise(function(resolve,reject){
             var currentGroup;
             var groupQuery = new AV.Query('Group');
-            groupQuery.equalTo('name', currentBuildUser[0].group);
+            groupQuery.equalTo('name', groupName);
             groupQuery.find({useMasterKey: true}).then(function(groups){
                 if(groups.length == 0){
                     reject(new AV.Error(404, 'group not found'))
                 }else{
-                    remove_authority(currentBuildUser[1]);
-                    GroupUserMap_middleTable.findData(undefined, currentBuildUser[1]).then(function (result) {
-                        return AV.Object.destroyAll(result,{useMasterKey:true}).then(function (res) {
-                            console.log("res",res)
-                        });
-                    })
-                    currentGroup = groups[0];
-                    return add_authority('admin' + '_' + groups[0].id, currentBuildUser[1]);
+                    resolve(groups)
                 }
-            }).then(function(newAuthority){
+            }).catch(function(error){
+                reject(new AV.Error(401, 'there is a server error'))
+            })
+
+        })
+    }
+
+    this.relateUserToGroup = function(currentBuildUser, groups){
+        return new Promise(function(resolve,reject){
+            var currentGroup;
+            currentGroup = groups[0];
+            add_authority('admin' + '_' + groups[0].id, currentBuildUser).then(function(newAuthority){
                 var addObject = [];
                 addObject.push(newAuthority);
-                addObject.push(GroupUserMap_middleTable.buildOneData(currentGroup, currentBuildUser[1]));
+                addObject.push(GroupUserMap_middleTable.buildOneData(currentGroup, currentBuildUser));
                 resolve(addObject)
             }).catch(function(error){
                 reject(new AV.Error(403, 'add_authority error'))
             })
 
+        })
+    }
+
+    this.updateUser = function(){
+        return that.updateUser_personal_Info().then(function (updateuser) {
+            var group = req.body.group;
+            if(group != undefined){
+                return that.findGroup(group).then(function(groups){
+                    if(groups.length == 0){
+                        throw(new AV.Error(404, 'group not found'));
+                    }else{
+                        remove_authority(updateuser);
+                        GroupUserMap_middleTable.findData(undefined, updateuser).then(function (result) {
+                            return AV.Object.destroyAll(result,{useMasterKey:true}).then(function (res) {
+                            });
+                        })
+                        return that.relateUserToGroup(updateuser, groups)
+                    }
+                })
+            }else{
+                return [updateuser]
+            }
+        }).then(function(result){
+            var addObject = [];
+            result.forEach(function (current) {
+                addObject = addObject.concat(current);
+            });
+            AV.Object.saveAll(addObject,{useMasterKey: true}).then(function () {
+                resolve('success')
+            },function (error) {
+                if(error.hasOwnProperty('message')) {
+                    if (error.message.indexOf('this middle table data already exist') > -1) {
+                        reject(new AV.Error(401,'you have already related to this group'))
+                    }
+                    else{
+                        reject(new AV.Error(401,'there is a server error'))
+                    }
+                }
+                else{
+                    reject(new AV.Error(401,'there is a server error'))
+                }
+            })
+        }).catch(function(err){
+            return DealUpdateUserError(err)
         })
     }
 
@@ -338,72 +390,54 @@ function userModule(req) {
                 if(typeof email != 'undefined'){
                     result[0].setEmail(email)
                 }
-                if(typeof phone != 'undefinde'){
+                if(typeof phone != 'undefined'){
                     result[0].setMobilePhoneNumber(phone)
                 }
                 return result[0].save(null,{'sessionToken': that.sessionToken})
-            }).then(function (updateuser) {
-                if(group != undefined){
-                    return that.relateUserToGroup([req.body, updateuser])
-                }else{
-                    return [updateuser]
-                }
-            }).then(function(result){
-                var addObject = [];
-                result.forEach(function (current) {
-                    addObject = addObject.concat(current);
-                });
-                AV.Object.saveAll(addObject,{useMasterKey: true}).then(function () {
-                    resolve('success')
-                },function (error) {
-                    if(error.hasOwnProperty('message')) {
-                        if (error.message.indexOf('this middle table data already exist') > -1) {
-                            reject(new AV.Error(401,'you have already related to this group'))
-                        }
-                        else{
-                            reject(new AV.Error(401,'there is a server error'))
-                        }
-                    }
-                    else{
-                        reject(new AV.Error(401,'there is a server error'))
-                    }
-                })
-
-            }).catch(function (error) {
-                console.error('AccessLink-Platform /user#  build up new user error',error)
-                if(error.hasOwnProperty('message')) {
-                    if (error.message.indexOf('Forbidden to update by class') > -1) {
-                        reject(new AV.Error(401, 'no authority to update user'));
-                    }
-                    else if (error.message.indexOf('Username has already been taken') > -1) {
-                        reject(new AV.Error(403, 'Username has already been taken'));
-                    }
-                    else if (error.message.indexOf('此电子邮箱已经被占用') > -1) {
-                        reject(new AV.Error(403, 'email has been occupied'));
-                    }
-                    else if (error.message.indexOf('Mobile phone number has already been taken') > -1) {
-                        reject(new AV.Error(403, 'Mobile phone number has already been taken'));
-                    }
-                    else if (error.message.indexOf("Invalid value type for field 'userInfo'") > -1) {
-                        reject(new AV.Error(403, 'Invalid userInfo'));
-                    }
-                    else if (error.message.indexOf("Invalid value type for field 'email'") > -1) {
-                        reject(new AV.Error(403, 'Invalid email'));
-                    }
-                    else if (error.message.indexOf("Invalid value type for field 'phone'") > -1) {
-                        reject(new AV.Error(403, 'Invalid phone'));
-                    }
-                    else
-                    {
-                        reject(new AV.Error(401, 'there is a server error'));
-                    }
-                }
-                else{
-                    reject(new AV.Error(401, 'there is a server error'));
-                }
+            }).then(function(updateuser){
+                resolve(updateuser)
+            }).catch(function(err){
+                reject(err)
             })
         })
     };
+
+    var DealUpdateUserError = function (error) {
+        console.error('AccessLink-Platform /user#  build up new user error',error)
+        if(error.hasOwnProperty('message')) {
+            if (error.message.indexOf('Forbidden to update by class') > -1) {
+                throw(new AV.Error(401, 'no authority to update user'));
+            }
+            else if (error.message.indexOf('Username has already been taken') > -1) {
+                throw(new AV.Error(403, 'Username has already been taken'));
+            }
+            else if (error.message.indexOf('此电子邮箱已经被占用') > -1) {
+                throw(new AV.Error(403, 'email has been occupied'));
+            }
+            else if (error.message.indexOf('Mobile phone number has already been taken') > -1) {
+                throw(new AV.Error(403, 'Mobile phone number has already been taken'));
+            }
+            else if (error.message.indexOf("Invalid value type for field 'userInfo'") > -1) {
+                throw(new AV.Error(403, 'Invalid userInfo'));
+            }
+            else if (error.message.indexOf("Invalid value type for field 'email'") > -1) {
+                throw(new AV.Error(403, 'Invalid email'));
+            }
+            else if (error.message.indexOf("Invalid value type for field 'phone'") > -1) {
+                throw(new AV.Error(403, 'Invalid phone'));
+            }
+            else if (error.message.indexOf("group not found") > -1) {
+                throw(new AV.Error(404, 'group not found'));
+            }
+            else
+            {
+                throw(new AV.Error(401, 'there is a server error'));
+            }
+        }
+        else{
+            reject(new AV.Error(401, 'there is a server error'));
+        }
+    }
 
     this.updateOneUserName_ByName = function () {
         return new Promise(function (resolve,reject) {
@@ -493,7 +527,6 @@ function userModule(req) {
             user.save(null,{'sessionToken':that.sessionToken}).then(function(){
                 resolve()
             }).catch(function(error){
-                console.log("error", error)
                 if(error.hasOwnProperty('message')) {
                     if (error.message.indexOf('无效的手机号码') > -1) {
                         reject(new AV.Error(403,'Mobile phone numbe is invalid'))
