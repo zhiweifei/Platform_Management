@@ -47,7 +47,6 @@ router.post('/', cors(corsOptions), function(req, res, next) {
         res.status(201);
         res.send("success, build up new User successfully");
     }).catch(function (error) {
-        console.log('error',error);
         res.status(error.code);
         res.send(error.message);
     })

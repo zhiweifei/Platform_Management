@@ -53,32 +53,32 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
 
         var filed1_Object = request.object.get(that.filed1);
         var filed2_Object = request.object.get(that.filed2);
-        console.log("firefight cloud#cloudSetACL tableName",that.tableName);
-        console.log('firefight cloud#cloudSetAC filed1_Object',filed1_Object);
-        console.log('firefight cloud#cloudSetAC filed2_Object',filed2_Object);
+        console.log("AccessLink-Platform cloud#cloudSetACL tableName",that.tableName);
+        console.log('AccessLink-Platform cloud#cloudSetAC filed1_Object',filed1_Object);
+        console.log('AccessLink-Platform cloud#cloudSetAC filed2_Object',filed2_Object);
         if(!filed1_Object || !filed2_Object){
-            throw new AV.Cloud.Error('firefight cloud#' + this.tableName + 'afterSave lack filed!');
+            throw new AV.Cloud.Error('AccessLink-Platform cloud#' + this.tableName + 'afterSave lack filed!');
         }
         else{
             return filed1_Object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
                 result.disableBeforeHook();
-                console.log("firefight cloud#filed1_Object afterSave ACL" + that.tableName,result.getACL());
+                console.log("AccessLink-Platform cloud#filed1_Object afterSave ACL" + that.tableName,result.getACL());
                 var filed1_ACL_Json = result.getACL();
                 return filed2_Object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
                     result.disableBeforeHook();
-                    console.log("firefight cloud#filed2_Object afterSave ACL" + that.tableName,result.getACL());
+                    console.log("AccessLink-Platform cloud#filed2_Object afterSave ACL" + that.tableName,result.getACL());
                     var filed2_ACL_Json = result.getACL();
                     var setAcl = mergeAcl(filed1_ACL_Json['permissionsById'], filed2_ACL_Json['permissionsById'])
                     request.object.set('ACL',setAcl);
                     return request.object.save(null,{'useMasterKey':true}).then(function()  {
                         filed2_Object.set('ACL',setAcl);
                         return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
-                            console.log("firefight cloud#" + that.tableName + "afterSave set ACL ok");
+                            console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave set ACL ok");
                         })
                     });
                 });
             }).catch(function (error) {
-                console.error('firefight cloud#cloudSetAC error',error);
+                console.error('AccessLink-Platform cloud#cloudSetAC error',error);
                 throw new AV.Cloud.Error('set middle table acl error')
             });
         }
@@ -128,7 +128,7 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
                     }
                     filed2_Object.set('ACL',resultJsonObject);
                     return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
-                        console.log("firefight cloud#" + that.tableName + "afterSave set ACL ok");
+                        console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave set ACL ok");
                     })
                 })
             }
