@@ -4,7 +4,7 @@ var OperatorInfo_event = require(__dirname + '/lib/event');
 AV.Cloud.afterSave('OperatorInfo', function(request) {
 
     var data = request.object.toJSON();
-    console.log("OperatorInfo save data as",data);
+    console.log("AccessLink-Platform_Management OperatorInfo table# save data as",data);
     var nodeInfoQuery = new AV.Query('NodeInfo');
     var userQuery = new AV.Query('_User');
     Promise.all([
@@ -14,7 +14,7 @@ AV.Cloud.afterSave('OperatorInfo', function(request) {
         data.Node = result[0].get('nodeId');
         data.PostMail = result[1].get('email');
         data.PostSMS = result[1].get('mobilePhoneNumber');
-        console.log('cloud# event_OperatorInfo_afterSave send data',data);
+        console.log('AccessLink-Platform_Management OperatorInfo table# event_OperatorInfo_afterSave send data',data);
         OperatorInfo_event.event.emit('event_OperatorInfo_afterSave', data );
     });
 
@@ -23,7 +23,7 @@ AV.Cloud.afterSave('OperatorInfo', function(request) {
 AV.Cloud.afterUpdate('OperatorInfo', function(request) {
 
     var data = request.object.toJSON();
-    console.log("OperatorInfo save data as",data);
+    console.log("AccessLink-Platform_Management OperatorInfo table# update data as",data);
     var nodeInfoQuery = new AV.Query('NodeInfo');
     var userQuery = new AV.Query('_User');
     Promise.all([
@@ -33,7 +33,7 @@ AV.Cloud.afterUpdate('OperatorInfo', function(request) {
         data.Node = result[0].get('nodeId');
         data.PostMail = result[1].get('email');
         data.PostSMS = result[1].get('mobilePhoneNumber');
-        console.log('cloud# event_OperatorInfo_afterUpdate send data',data);
+        console.log('AccessLink-Platform_Management OperatorInfo table# event_OperatorInfo_afterUpdate send data',data);
         OperatorInfo_event.event.emit('event_OperatorInfo_afterUpdate', data );
     });
 
@@ -43,7 +43,7 @@ AV.Cloud.afterUpdate('OperatorInfo', function(request) {
 AV.Cloud.afterDelete('OperatorInfo', function(request) {
 
     var data = request.object.toJSON();
-    console.log("OperatorInfo save data as",data);
+    console.log("AccessLink-Platform_Management OperatorInfo table# delete data as",data);
     var nodeInfoQuery = new AV.Query('NodeInfo');
     var userQuery = new AV.Query('_User');
     Promise.all([
@@ -53,7 +53,7 @@ AV.Cloud.afterDelete('OperatorInfo', function(request) {
         data.Node = result[0].get('nodeId');
         data.PostMail = result[1].get('email');
         data.PostSMS = result[1].get('mobilePhoneNumber');
-        console.log('cloud# event_OperatorInfo_afterDelete send data',data);
+        console.log('AccessLink-Platform_Management OperatorInfo table## event_OperatorInfo_afterDelete send data',data);
         OperatorInfo_event.event.emit('event_OperatorInfo_afterDelete', data );
     });
 
