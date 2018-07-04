@@ -159,7 +159,13 @@ function groupInterface(req) {
             var postInfo = that.paramArray.body.value;
             async.map(postInfo,function (current,callback) {
                 buildUpOneGroup(current).then(function(arr){
-                    return relateGroupRoleToUser(arr[0],arr[1],arr[2])
+                    var admin = arr[1];
+                    var group_admin = [that.login_username];
+                    var group_user;
+                    if(Array.isArray(admin)){
+                        group_user = arr[1].concat(that.login_username);
+                    }
+                    return relateGroupRoleToUser(arr[0],group_user,admin,group_admin)
                 }).catch(function(error){
                     return dealBuildGroupErr(error)
                 }).then(function (result) {
@@ -185,25 +191,15 @@ function groupInterface(req) {
             var GroupObject = AV.Object.extend('Group');
             var NewGroup = new GroupObject();
             NewGroup.set('name', bodyName);
-            var ownUser = false;
-            if (typeof groupInfo != 'undefined') {
-                NewGroup.set('groupInfo', groupInfo);
-            }
+            NewGroup.set('groupInfo', groupInfo);
 
             if (Array.isArray(related_user)) {
-                if(related_user.length == 0)
+                if(related_user.length == 0){
                     reject(new AV.Error(403,'Invalid user'))
-                else {
-                    ownUser = true;
-                }
-            }
-            else {
-                if(typeof related_user != 'undefined') {
-                    throw new AV.Error(403,'Invalid user');
                 }
             }
             NewGroup.save(null,{'sessionToken': that.sessionToken}).then(function(NewGroupObject){
-                resolve([NewGroupObject,related_user,ownUser])
+                resolve([NewGroupObject,related_user])
             }).catch(function(error){
                 reject(error)
             })
@@ -212,12 +208,12 @@ function groupInterface(req) {
 
     };
 
-    var relateGroupRoleToUser = function (NewGroupObject,related_user,ownUser){
+    var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admin){
         var buildObject = [];
-        if(ownUser == true){
-            buildObject.push(relate_GroupToUser(related_user.concat(that.login_username), NewGroupObject));
-            buildObject.push(relate_UserToRole(related_user, NewGroupObject.id, "admin_"));
-            buildObject.push(relate_UserToRole([that.login_username], NewGroupObject.id, "group_admin_"))
+        if(Array.isArray(admin)){
+            buildObject.push(relate_GroupToUser(group_user, NewGroupObject));
+            buildObject.push(relate_UserToRole(admin, NewGroupObject.id, "admin_"));
+            buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"))
         }
         return Promise.all(buildObject).then(function (result) {
             var addObject = [];
@@ -328,7 +324,7 @@ function groupInterface(req) {
                 if(Array.isArray(newUserArr))
                     dealObject.push(dealNewUserArr(currentGroupObject,newUserArr))
                 else {
-                    if(typeof newUserArr != 'undefined') {
+                    if(typeof newUserArr == 'undefined') {
                         reject(new AV.Error(403, 'Invalid user'));
                     }
                 }
