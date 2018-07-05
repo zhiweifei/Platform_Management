@@ -384,15 +384,9 @@ function userModule(req) {
                 if(result.length == 0){
                     throw new AV.Error(404,'user not found or no authority')
                 }
-                if(typeof userInfo != 'undefined'){
-                    result[0].set('userInfo',userInfo)
-                }
-                if(typeof email != 'undefined'){
-                    result[0].setEmail(email)
-                }
-                if(typeof phone != 'undefined'){
-                    result[0].setMobilePhoneNumber(phone)
-                }
+                result[0].set('userInfo',userInfo);
+                result[0].setEmail(email);
+                result[0].setMobilePhoneNumber(phone);
                 return result[0].save(null,{'sessionToken': that.sessionToken})
             }).then(function(updateuser){
                 resolve(updateuser)
