@@ -27,7 +27,7 @@ function userModule(req) {
             break;
         case 'POST':
             paramArray = {
-                body:{type:"[object Array]",default:undefined}
+                body:{type:"[object Object]",default:undefined}
             };
             for (var i in paramArray) {
                 paramArray[i].value = req.body == undefined ? paramArray[i]["default"] : req.body;
@@ -122,10 +122,14 @@ function userModule(req) {
             var roleQuery = new AV.Query(AV.Role);
             roleQuery.equalTo('name', roleName);
             roleQuery.find({useMasterKey: true}).then(function (results) {
-                var administratorRole = results[0];
-                var relation = administratorRole.getUsers();
-                relation.add(loginedUser);
-                resolve(administratorRole);
+                if(results.length == 0){
+                    reject(new AV.Error(404, 'role not found or no authority'))
+                }else{
+                    var administratorRole = results[0];
+                    var relation = administratorRole.getUsers();
+                    relation.add(loginedUser);
+                    resolve(administratorRole);
+                }
             }).catch(function (error) {
                 console.error('AccessLink-Platform /user/post#  get role error', error);
                 reject(new AV.Error(404, 'role not found or no authority'))
@@ -163,51 +167,51 @@ function userModule(req) {
         })
     };
 
-   
-    this.buildAllUser = function () {
+    this.relationGroup = function(newuser){
+        var current = that.paramArray.body.value;
         return new Promise(function (resolve,reject) {
-            var postInfo = that.paramArray.body.value;
-            async.map(postInfo,function (current,callback) {
-                buildUpOneNewUser(current).then(function(newuser){
-                    if(current.group != undefined){
-                        return that.findGroup(current.group).then(function(groups){
-                            if(groups.length == 0){
-                                throw(new AV.Error(404, 'group not found'));
-                            }else{
-                                return that.relateUserToGroup(newuser, groups)
-                            }
+            if(current.group != undefined){
+                return that.findGroup(current.group).then(function(groups){
+                    if(groups.length == 0){
+                        throw(new AV.Error(404, 'group not found'));
+                    }else{
+                        return that.relateUserToGroup(newuser, groups).then(function(result){           
+                            var addObject = [];
+                            result.forEach(function (current) {
+                                addObject = addObject.concat(current);
+                            });
+                            AV.Object.saveAll(addObject,{useMasterKey: true}).then(function () {
+                                resolve('success')
+                            },function (error) {
+                                if(error.hasOwnProperty('message')) {
+                                    if (error.message.indexOf('this middle table data already exist') > -1) {
+                                        reject(new AV.Error(401,'you have already related to this group'))
+                                    }
+                                    else{
+                                        reject(new AV.Error(401,'there is a server error'))
+                                    }
+                                }
+                                else{
+                                    reject(new AV.Error(401,'there is a server error'))
+                                }
+                            })
+
                         })
                     }
-                }).then(function (result) {
-                    callback(null,result)
-                },function (error) {
-                    reject(error)
                 })
-            },function (error,result) {                
-                var addObject = [];
-                result.forEach(function (current) {
-                    addObject = addObject.concat(current);
-                });
-                AV.Object.saveAll(addObject,{useMasterKey: true}).then(function () {
-                    resolve('success')
-                },function (error) {
-                    if(error.hasOwnProperty('message')) {
-                        if (error.message.indexOf('this middle table data already exist') > -1) {
-                            reject(new AV.Error(401,'you have already related to this group'))
-                        }
-                        else{
-                            reject(new AV.Error(401,'there is a server error'))
-                        }
-                    }
-                    else{
-                        reject(new AV.Error(401,'there is a server error'))
-                    }
-                })
-            })
-        });
+            }
+        })
     }
 
-    var buildUpOneNewUser = function (currentBuild) {
+    this.setUserACL = function(user){
+        var AclArr = [];
+        AclArr = ['super_admin'];
+        user.setACL(setDataAcl(AclArr,[user.id]));
+        return user.save(null,{useMasterKey: true});
+    }
+
+    this.buildUser = function () {
+        var currentBuild = that.paramArray.body.value;
         return new Promise(function (resolve,reject) {
             var username = currentBuild.username;
             var password = currentBuild.password;
@@ -233,12 +237,7 @@ function userModule(req) {
             if(typeof phone !='undefined'){
                 user.setMobilePhoneNumber(phone);
             }
-            var AclArr = [];
-            user.signUp(null,{useMasterKey: true}).then(function (result) {
-                AclArr = ['super_admin'];
-                result.setACL(setDataAcl(AclArr,[result.id]));
-                return result.save(null,{useMasterKey: true});
-            }).then(function (newuser) {
+            user.signUp(null,{useMasterKey: true}).then(function (newuser) {
                 resolve(newuser)
             }).catch(function (error) {
                 console.error('AccessLink-Platform /user#  build up new user error',error);

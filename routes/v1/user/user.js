@@ -43,7 +43,13 @@ router.get('/', cors(corsOptions), function(req, res, next) {
 router.post('/', cors(corsOptions), function(req, res, next) {
     var UM = new user_module(req);
     UM.typeCheck();
-    UM.buildAllUser().then(function () {
+    UM.buildUser().then(function(user){
+        return UM.setUserACL(user)
+    }).then(function (newuser) {
+        return UM.relationGroup(newuser)
+    },function (error) {
+        throw error
+    }).then(function () {
         res.status(201);
         res.send("success, build up new User successfully");
     }).catch(function (error) {
