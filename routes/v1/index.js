@@ -6,5 +6,8 @@
 module.exports = function (app) {
 
     require('./node/index')(app);
+    require('./login')(app);
+    require('./group')(app);
+    require('./user')(app);
 
 };
