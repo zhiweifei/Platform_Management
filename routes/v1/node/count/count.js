@@ -7,7 +7,7 @@ var router = require('express').Router();
 var cors = require('cors');
 var corsOptions = {
     origin: function(origin, callback){
-        console.log("NodeInfo#  origin:"+origin);
+        console.log("AccessLink-Platform_Management device management nodeInfo#  origin:"+origin);
         var originIsWhitelisted = true;
         callback(originIsWhitelisted ? null : 'Bad Request', originIsWhitelisted);
     }
@@ -28,7 +28,7 @@ router.get('/', cors(corsOptions), function(req, res, next) {
         res.status(200);
         res.send({count:td});
     }).catch(function (error) {
-        console.error('device management /node/nodeId #error',error);
+        console.error('AccessLink-Platform_Management device management#  /node/nodeId #error',error);
         res.status(error.code);
         res.send(error.message);
     });

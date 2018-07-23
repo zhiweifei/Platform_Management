@@ -7,7 +7,7 @@ var router = require('express').Router();
 var cors = require('cors');
 var corsOptions = {
     origin: function(origin, callback){
-        console.log("nodeInfo#  origin:"+origin);
+        console.log("AccessLink-Platform_Management device management nodeInfo#  origin:"+origin);
         var originIsWhitelisted = true;
         callback(originIsWhitelisted ? null : 'Bad Request', originIsWhitelisted);
     }
@@ -38,7 +38,7 @@ router.get('/', cors(corsOptions), function(req, res, next) {
         res.status(200);
         res.send(nodeInfoResponse);
     }).catch(function (error) {
-        console.error('device management /node/get #error',error);
+        console.error('AccessLink-Platform_Management device management /node/get #error',error);
         res.status(error.code);
         res.send(error.message);
     });
@@ -55,7 +55,7 @@ router.post('/', cors(corsOptions), function(req, res, next) {
         res.status(201);
         res.send('build nodeInfo successfully');
     }).catch(function (error) {
-        console.error('device management /node/put #error',error);
+        console.error('AccessLink-Platform_Management device management /node/put #error',error);
         res.status(error.code);
         res.send(error.message);
     });
@@ -72,7 +72,7 @@ router.put('/', cors(corsOptions), function(req, res, next) {
         res.status(201);
         res.send('update nodeInfo successfully');
     }).catch(function (error) {
-        console.error('device management /node/put #error',error);
+        console.error('AccessLink-Platform_Management device management /node/put #error',error);
         res.status(error.code);
         res.send(error.message);
     });
@@ -91,7 +91,7 @@ router.delete('/', cors(corsOptions), function(req, res, next) {
             "res":"success, delete NodeInfo successfully"
         });
     }).catch(function (error) {
-        console.error('device management /node/delete #error',error);
+        console.error('AccessLink-Platform_Management device management /node/delete #error',error);
         res.status(error.code);
         res.send(error.message);
     });
