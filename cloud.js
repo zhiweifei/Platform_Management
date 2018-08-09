@@ -132,6 +132,17 @@ AV.Cloud.beforeDelete('Group',function (request) {
     })
 });
 
+AV.Cloud.beforeSave('NodeInfo',function (request) {
+    console.log("#cloud beforeSave NodeInfo request.object",request.object);
+    var roleAcl = new AV.ACL();
+    var objectId = request.object.get('Group').id;
+    roleAcl.setRoleReadAccess('super_admin', true);
+    roleAcl.setRoleReadAccess('group_admin_' + objectId, true);
+    roleAcl.setRoleWriteAccess('group_admin_' + objectId, true);
+    roleAcl.setRoleReadAccess('admin_' + objectId, true);
+    request.object.set('ACL',roleAcl);
+});
+
 AV.Cloud.beforeDelete('NodeInfo',function (request) {
     console.log("#cloud delete NodeInfo request.object",request.object);
     return Promise.all([
