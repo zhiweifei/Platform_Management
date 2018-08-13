@@ -47,7 +47,6 @@ router.get('/', cors(corsOptions), function(req, res, next) {
 router.post('/', cors(corsOptions), function(req, res, next) {
     var NM = new nodeInfo_module(req);
     AV.User.become(NM.sessionToken).catch(function(error){
-        console.error('ytf test error',error);
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
         NM.typeCheck();
