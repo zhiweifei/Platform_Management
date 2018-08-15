@@ -165,7 +165,6 @@ describe('Get /v1/group/name', () => {
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery, (data: any, statusCode: number) => {
-			console.log(data, statusCode)
 			statusCode.should.equal(403)
 			data.should.equal('error, invalid param in limit')
 			done()

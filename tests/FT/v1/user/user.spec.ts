@@ -697,7 +697,7 @@ describe('Delete /v1/user', () => {
 			done()
 		}, function (error) {
 		// delete fail
-			console.log("error", error)
+			console.error("delete fake data error", error)
 			done()
 		})
 	})

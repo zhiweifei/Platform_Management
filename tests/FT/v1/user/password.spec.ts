@@ -87,7 +87,7 @@ describe('Put /v1/user/password', () => {
 			done()
 		}, function (error) {
 		// delete fail
-			console.log("error", error)
+			console.error("delete fake data error", error)
 			done()
 		})
 	})

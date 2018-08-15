@@ -682,7 +682,7 @@ describe('Delete /v1/group', () => {
 			console.log("put fake data for delete, and objectIDs:", groupData.objectId)
 			done();
 		}, (error) => {
-			console.error(error)
+			console.error("put fake data error",error)
 		})
 	})
 
@@ -694,7 +694,7 @@ describe('Delete /v1/group', () => {
 			done()
 		}, function (error) {
 		// delete fail
-			console.log("error", error)
+			console.error("delete fake data error", error)
 			done()
 		})
 	})
