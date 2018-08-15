@@ -1,0 +1,14 @@
+{
+    "AppID":102420135252,
+    "AppSecret":"f58ff64e71ece37617517b3955162a48",
+    "email": {
+        "service": "QQ",
+        "user": "1421752582@qq.com",
+        "pass": "ynhpqplqesqpgdea"
+    },
+    "database":{
+        "appId": "BsSO3QF21lGNyCutqLevuO9G-gzGzoHsz",
+        "appKey": "zUarQbMaT1sETM9NasUAKimL",
+        "masterKey" : "onldB5UXVF5aCpb0ANQBueeO"
+    }
+}
