@@ -9,6 +9,5 @@ module.exports = function (app) {
     require('./login')(app);
     require('./group')(app);
     require('./user')(app);
-    require('./operatorInfo/index')(app);
 
 };
