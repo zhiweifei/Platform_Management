@@ -133,7 +133,6 @@ var OperateModule = function(req){
                 groupNameArr.push(currentJsonObject.name)
             });
             if(groupNameArr.indexOf(groupname) > -1){
-                console.log('testtesttest',result[groupNameArr.indexOf(groupname)]);
                 return result[groupNameArr.indexOf(groupname)]
             }
             else{
