@@ -4,9 +4,12 @@ import 'mocha'
 import { AppPUT, AppGET, AppPOST, AppDELETE } from "../../../lib/http-tools"
 import { UserGetParameter } from "../lib/parameter"
 
-const devurl = "localhost"
 const userPath = "/v1/user/count"
-const port = parseInt(process.env.PORT || require("../../config").port)
+/*const devurl = "localhost"
+const port = parseInt(process.env.PORT || require("../../config").port)*/
+
+const devurl = "protocol-access.leanapp.cn";
+const port = 80;
 
 describe('Get /v1/user/count', () => {
 	let sessionToken = require('../../config').sessionToken.test_super

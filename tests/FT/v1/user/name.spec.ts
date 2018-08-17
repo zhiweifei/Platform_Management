@@ -8,13 +8,15 @@ import querystring = require('querystring');
 import * as AV from 'leancloud-storage';
 import { UserNameGetParameter, UserNamePutParameter} from "./lib/parameter"
 
-const devurl = "localhost"
+//const devurl = "localhost"
 const appkey = require('../config').AppKey
 const masterKey = require('../config').MasterKey
 const appIDPath = "/../../../../.leancloud/current_app_id"
 const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const userPath = "/v1/user/name"
-const port = parseInt(process.env.PORT || require("../config").port)
+//const port = parseInt(process.env.PORT || require("../config").port)
+const devurl = "protocol-access.leanapp.cn";
+const port = 80;
 class _User extends AV.Object {}
 AV.Object.register(_User)
 try{
@@ -280,7 +282,7 @@ describe('Get /v1/user/name', () => {
 
 })
 
-describe('Put /v1/user/name', () => {
+describe.only('Put /v1/user/name', () => {
 	let sessionToken = require('../config').sessionToken.test
 	let userData: any = {}
 	let newUser: UserNamePutParameter
@@ -294,6 +296,7 @@ describe('Put /v1/user/name', () => {
 		userNamePut.setSessionToken(sessionToken)
 		userNamePut.PUT(newUser,
 			(data: any, statusCode: number) => {
+				console.log('data,statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, update user name successfully")
 				done()
@@ -326,7 +329,7 @@ describe('Put /v1/user/name', () => {
 		userNamePut.PUT(newUser,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(401)
-				data.should.equal("there is a server error")
+				data.should.equal("no authority to update the user")
 				done()
 			})
 	})
