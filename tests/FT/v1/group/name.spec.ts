@@ -7,16 +7,20 @@ import { sortCommonCheck, sortDateCheck } from "../../lib/sort"
 import querystring = require('querystring');
 import { GroupQueryParameter, GroupPutParameter} from "./lib/parameter"
 
-const devurl = "localhost"
+
 //const devurl = "firefight.leanapp.cn"
 let sessionToken = require('../config').sessionToken.test_super
 const groupNamePath = "/v1/group/name"
-const port = parseInt(process.env.PORT || require("../config").port)
+/*const devurl = "localhost"
+const port = parseInt(process.env.PORT || require("../config").port)*/
+
+const devurl = "protocol-access.leanapp.cn";
+const port = 80;
 
 
 describe('Get /v1/group/name', () => {
 
-	it("default parameter should return 1000 group data by descend", (done) => {
+	it.skip("default parameter should return 1000 group data by descend", (done) => {
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET("", (data: any, statusCode: number) =>{
@@ -41,7 +45,7 @@ describe('Get /v1/group/name', () => {
 		})
 	})
 
-	it("use limit 20 and skip 20 &  should return 20 group data with 20 skip", (done) => {
+	it.skip("use limit 20 and skip 20 &  should return 20 group data with 20 skip", (done) => {
 		console.log("Get 40 data at first")
 		let groupQuery: GroupQueryParameter = {
 			limit: 40

@@ -2,9 +2,11 @@ import 'chai/register-should'
 import 'mocha'
 import { AppGET} from "../../../lib/http-tools"
 
-const devurl = "localhost"
 const groupPath = "/v1/group/count"
-const port = parseInt(process.env.PORT || require("../../config").port)
+/*const devurl = "localhost"
+const port = parseInt(process.env.PORT || require("../../config").port)*/
+const devurl = "protocol-access.leanapp.cn";
+const port = 80;
 
 describe('Get /v1/group/count', () => {
 	let sessionToken = require('../../config').sessionToken.test_super;

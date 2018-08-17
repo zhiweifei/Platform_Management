@@ -26,12 +26,6 @@ class httpRequest {
 }
 
 class AppRequest extends httpRequest {
-	private getLCSign(): string{
-		let timeStamp: number = new Date().valueOf() 
-		let LCSign: string = timeStamp.toString() + appkey
-		return md5(LCSign) + "," + timeStamp.toString()
-	}
-
 	setSessionToken(SessionToken: string) {
 		this.httpOption.headers.SessionToken = SessionToken;
 	}
@@ -39,9 +33,7 @@ class AppRequest extends httpRequest {
 	constructor(url: string, path: string, port: number, method: string) {
 		super(url, path, port, method)
 		this.httpOption.headers = {
-			"Content-Type": "application/json",
-			"X-LC-Id": appID,
-			"X-LC-Sign": this.getLCSign()
+			"Content-Type": "application/json"
 		}
 	}
 
