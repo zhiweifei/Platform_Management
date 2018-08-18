@@ -27,15 +27,25 @@ function userModule(req) {
             break;
         case 'POST':
             paramArray = {
-                body:{type:"[object Object]",default:undefined}
+                username:{type:"[object String]",default:""},
+                password:{type:"[object String]",default:""},
+                group:{type:"[object String]",default:undefined},
+                userInfo:{type:"[object String]",default:undefined},
+                email:{type:"[object String]",default:undefined},
+                phone:{type:"[object String]",default:undefined}
             };
             for (var i in paramArray) {
-                paramArray[i].value = req.body == undefined ? paramArray[i]["default"] : req.body;
+                paramArray[i].value = req.body[i] == undefined ? paramArray[i]["default"] : req.body[i];
             }
             break;
         case 'PUT':
             paramArray = {
-                body:{type:"[object Array]",default:undefined}
+                username:{type:"[object String]",default:""},
+                newName:{type:"[object String]",default:undefined},
+                group:{type:"[object String]",default:undefined},
+                userInfo:{type:"[object String]",default:undefined},
+                email:{type:"[object String]",default:undefined},
+                phone:{type:"[object String]",default:undefined}
             };
             for (var i in paramArray) {
                 paramArray[i].value = req.body == undefined ? paramArray[i]["default"] : req.body;
@@ -56,12 +66,61 @@ function userModule(req) {
     this.typeCheck = function(){
         var paramsArray = this.paramArray;
         for(var i in paramsArray){
-            if(Object.prototype.toString.call(paramsArray[i].value)!=paramsArray[i].type){
+            if(paramsArray[i].val != undefined && Object.prototype.toString.call(paramsArray[i].value)!=paramsArray[i].type){
                 throw new AV.Error(403,"error, invalid param in " + i);
             }
         }
         return 'true'
     };
+
+    this.paramCheck = function(){
+        switch (req.method){
+            case 'POST':
+                var val = req.body;
+                if(!val.username){
+                    throw new AV.Error(403,"error, miss username")
+                }
+                if(!val.password){
+                    throw new AV.Error(403,"error, miss password")
+                }
+                if(!val.username && !val.password){
+                    throw new AV.Error(403,"error, miss username and password")
+                }
+                break;
+            case 'PUT':
+                var val = req.body;
+                if(!val.username){
+                    throw new AV.Error(403,"error, miss username")
+                }
+                if(req.originalUrl.split("?")[0]=="/v1/user"){
+                    if(!val.newName && !val.group && !val.userInfo && !val.email && !val.phone){
+                        throw new AV.Error(403,"error, params include newName,group,userInfo,email,phone at least one")
+                    } 
+                }
+                if(req.originalUrl.split("?")[0]=="/v1/user/name"){
+                    if(!val.newName){
+                        throw new AV.Error(403,"error, miss newName")
+                    } 
+                }
+                if(req.originalUrl.split("?")[0]=="/v1/user/password"){
+                    if(!val.password){
+                        throw new AV.Error(403,"error, miss password")
+                    } 
+                }
+                if(req.originalUrl.split("?")[0]=="/v1/user/verify"){
+                    if(!val.email && !val.phone){
+                        throw new AV.Error(403,"error, params include email,phone at least one")
+                    } 
+                }
+                break;
+            case 'DELETE':
+                var val = req.query;
+                if(!val.username){
+                    throw new AV.Error(403,"error, miss username")
+                }
+        }
+        return true   
+    }
 
     this.getUserInfo = function (select) {
         var skip = this.paramArray.skip.value;
@@ -168,14 +227,14 @@ function userModule(req) {
     };
 
     this.relationGroup = function(newuser){
-        var current = that.paramArray.body.value;
+        var current = req.body;
         return new Promise(function (resolve,reject) {
             if(current.group != undefined){
                 return that.findGroup(current.group).then(function(groups){
                     if(groups.length == 0){
                         throw(new AV.Error(404, 'group not found'));
                     }else{
-                        return that.relateUserToGroup(newuser, groups).then(function(result){           
+                        return that.relateUserToGroup(newuser, groups).then(function(result){         
                             var addObject = [];
                             result.forEach(function (current) {
                                 addObject = addObject.concat(current);
@@ -198,7 +257,11 @@ function userModule(req) {
 
                         })
                     }
+                }).catch(function(error){
+                    reject(error)
                 })
+            }else{
+                resolve("success")
             }
         })
     }
@@ -211,30 +274,25 @@ function userModule(req) {
     }
 
     this.buildUser = function () {
-        var currentBuild = that.paramArray.body.value;
+        var currentBuild = that.paramArray;
         return new Promise(function (resolve,reject) {
-            var username = currentBuild.username;
-            var password = currentBuild.password;
-            var userInfo = currentBuild.userInfo;
-            var email = currentBuild.email;
-            var phone = currentBuild.phone;
+            var username = currentBuild.username.value;
+            var password = currentBuild.password.value;
+            var userInfo = currentBuild.userInfo.value;
+            var email = currentBuild.email.value;
+            var phone = currentBuild.phone.value;
 
             var user = new AV.User();
-            if(typeof username != 'string')
-                throw new AV.Error(403,'Invalid username');
-            if(typeof password != 'string'){
-                throw new AV.Error(403,'Invalid password');
-            }
             user.setUsername(username);
             user.setPassword(password);
 
-            if(typeof userInfo !='undefined'){
+            if(typeof userInfo !=undefined){
                 user.set('userInfo',userInfo);
             }
-            if(typeof email !='undefined'){
+            if(typeof email !=undefined){
                 user.setEmail(email);
             }
-            if(typeof phone !='undefined'){
+            if(typeof phone !=undefined){
                 user.setMobilePhoneNumber(phone);
             }
             user.signUp(null,{useMasterKey: true}).then(function (newuser) {
@@ -347,6 +405,9 @@ function userModule(req) {
                     if (error.message.indexOf('this middle table data already exist') > -1) {
                         reject(new AV.Error(401,'you have already related to this group'))
                     }
+                    if (error.message.indexOf('The user cannot be altered by other users or with outdated session') > -1) {
+                        reject(new AV.Error(401,'no authority to update the user'))
+                    }
                     else{
                         reject(new AV.Error(401,'there is a server error'))
                     }
@@ -401,6 +462,9 @@ function userModule(req) {
             if (error.message.indexOf('Forbidden to update by class') > -1) {
                 throw(new AV.Error(401, 'no authority to update user'));
             }
+            else if (error.message.indexOf('The user cannot be altered by other users or with outdated session') > -1) {
+                throw(new AV.Error(401,'no authority to update the user'))
+            }
             else if (error.message.indexOf('Username has already been taken') > -1) {
                 throw(new AV.Error(403, 'Username has already been taken'));
             }
@@ -428,13 +492,13 @@ function userModule(req) {
             }
         }
         else{
-            reject(new AV.Error(401, 'there is a server error'));
+            throw(new AV.Error(401, 'there is a server error'));
         }
     }
 
     this.updateOneUserName_ByName = function () {
         return new Promise(function (resolve,reject) {
-            var updateInfo = that.paramArray.body.value;
+            var updateInfo = req.body;
             var UserOldName = updateInfo.username;
             var UserNewName = updateInfo.newName;
             console.log("old and new name",UserOldName,UserNewName)
@@ -457,14 +521,28 @@ function userModule(req) {
             }).then(function () {
                 resolve("success, update username successfully")
             }).catch(function (error) {
-                reject(new AV.Error(401,'there is a server error'))
+                if(error.hasOwnProperty('message')) {
+                    if (error.message.indexOf('Forbidden to update by class') > -1) {
+                        reject(new AV.Error(401, 'no authority to update user'));
+                    }
+                    else if (error.message.indexOf('The user cannot be altered by other users or with outdated session') > -1) {
+                        reject(new AV.Error(401,'no authority to update the user'))
+                    }
+                    else
+                    {
+                        reject(new AV.Error(401, 'there is a server error'));
+                    }
+                }
+                else{
+                    reject(new AV.Error(401, 'there is a server error'));
+                }
             })
         })
     };
 
     this.updateUserPassword = function () {
         return new Promise(function (resolve,reject) {
-            var updateInfo = that.paramArray.body.value;
+            var updateInfo = req.body;
             var username = updateInfo.username;
             var oldPassword = updateInfo.oldPassword;
             var newPassword = updateInfo.newPassword;
@@ -486,6 +564,9 @@ function userModule(req) {
                     if (error.message.indexOf('The username and password mismatch') > -1) {
                         reject(new AV.Error(401,'The username and password mismatch'))
                     }
+                    else if (error.message.indexOf('The user cannot be altered by other users or with outdated session') > -1) {
+                        reject(new AV.Error(401,'no authority to update the user'))
+                    }
                     else{
                         reject(new AV.Error(401,'there is a server error'))
                     }
@@ -499,58 +580,40 @@ function userModule(req) {
 
     this.verifyEmailPhone = function() {
         return new Promise(function (resolve,reject) {
-            var verifyInfo = that.paramArray.body.value;
-            var username = verifyInfo.username;
+            var verifyInfo = req.body;
             var email = verifyInfo.email;
+            //Todo: verify by phone  
             var phone = verifyInfo.phone;
-            if(username == undefined){
-                throw new AV.Error(403,'miss username')
+            if(email == undefined){
+                throw new AV.Error(403,'miss email')
+            }else{
+                AV.User.requestEmailVerify(email).then(function(scs){
+                    resolve()
+                }).catch(function(err){
+                    reject(err)
+                });
             }
-            if(email == undefined && phone == undefined){
-                throw new AV.Error(403,'miss email or phone')
-            }
-            var user = that.user;
-            if(email != undefined){
-
-                user.setEmail(email);
-            }
-            if(phone != undefined){
-                user.setMobilePhoneNumber(phone);
-            }
-            user.save(null,{'sessionToken':that.sessionToken}).then(function(){
-                resolve()
-            }).catch(function(error){
-                if(error.hasOwnProperty('message')) {
-                    if (error.message.indexOf('无效的手机号码') > -1) {
-                        reject(new AV.Error(403,'Mobile phone numbe is invalid'))
-                    }else if(error.message.indexOf('Mobile phone number has already been taken') > -1){
-                        reject(new AV.Error(403,'Mobile phone number has already been taken'))
-                    }else if(error.message.indexOf('The email address was invalid') > -1){
-                        reject(new AV.Error(403,'The email is invalid'))
-                    }else if(error.message.indexOf('此电子邮箱已经被占用') > -1){
-                        reject(new AV.Error(403,'The email has already been taken'))
-                    }else{
-                        reject(new AV.Error(401,'there is a server error'))
-                    }
-                }
-                else{
-                    reject(new AV.Error(401,'there is a server error'))
-                }
-            })
 
         })        
     }
 
     var findOneUser = function (username) {
         var deleteObject = [];
+        var current_user;
         return new Promise(function (resolve,reject) {
             AV.User.become(that.sessionToken).then(function (result) {
+                current_user = result.toJSON().username;
                 var RoleQuery = new AV.Query(AV.Role);
                 RoleQuery.equalTo('users',result);
                 return RoleQuery.find({'sessionToken': that.sessionToken});
             }).then(function (role) {
-                var roleName = role[0].get('name');
-                if(roleName.indexOf('super_admin')>-1 || roleName.indexOf('group_admin')>-1){
+                var roleName = "";
+                role.forEach(function(val){
+                    if(val.get('name').indexOf('super_admin')>-1){
+                        roleName = "super_admin";
+                    }
+                })
+                if(roleName == "super_admin" || current_user == username){
                     var userQuery = new AV.Query('_User');
                     userQuery.equalTo('username', username);
                     return userQuery.find({'sessionToken':that.sessionToken}).then(function (userObject) {

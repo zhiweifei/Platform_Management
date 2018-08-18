@@ -43,11 +43,12 @@ router.post('/', cors(corsOptions), function(req, res, next) {
     }).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
+        GM.paramsCheck();
         GM.typeCheck();
         return GM.buildAllGroup();
     }).then(function () {
         res.status(201);
-        res.send("success, relate to users successfully");
+        res.send("success, build group successfully");
     }).catch(function (error) {
         console.error('Group# post error',error);
         res.status(error.code);
@@ -60,11 +61,12 @@ router.put('/', cors(corsOptions), function(req, res, next) {
     AV.User.become(GM.sessionToken).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
+        GM.paramsCheck();
         GM.typeCheck();
         return GM.updateAllGroup();
     }).then(function () {
         res.status(201);
-        res.send("success, update group Info successfully");
+        res.send("success, update group successfully");
     }).catch(function (error) {
         console.error('Group# put error',error);
         res.status(error.code);

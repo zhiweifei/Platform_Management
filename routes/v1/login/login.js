@@ -22,8 +22,8 @@ router.post('/', cors(corsOptions), function(req, res, next) {
         res.send(userinfo);
     }).catch(function(err){
         console.error("Login# error",err);
-        res.status(err.code);
-        res.send(err.message);
+        res.status(err.code == 1? 401:error.code);
+        res.send(err.message.replace(/\[[^\)]*\]/g,""));
     })
 });
 

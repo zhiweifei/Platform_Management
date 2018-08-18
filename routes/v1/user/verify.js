@@ -18,19 +18,13 @@ router.options('/', cors(corsOptions));
 // http request method post
 router.post('/', cors(corsOptions), function(req, res, next) {
     var UM = new user_module(req);
-    AV.User.become(UM.sessionToken).then(function(user){
-        UM.user = user;
-    }).catch(function () {
-        throw new AV.Error(401,'Invalid SessionToken');
-    }).then(function() {
-        return UM.verifyEmailPhone();
-    }).then(function () {
+    UM.verifyEmailPhone().then(function () {
         res.status(201);
         res.send("success, verify email or phone success");
     }).catch(function (error) {
         console.error('UserVerify #/user/verify put error',error);
-        res.status(error.code);
-        res.send(error.message);
+        res.status(error.code == 1? 401:error.code);
+        res.send(error.message.replace(/\[[^\)]*\]/g,""));
     });
 });
 

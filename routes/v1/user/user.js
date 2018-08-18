@@ -42,8 +42,13 @@ router.get('/', cors(corsOptions), function(req, res, next) {
 // http request method post
 router.post('/', cors(corsOptions), function(req, res, next) {
     var UM = new user_module(req);
-    UM.typeCheck();
-    UM.buildUser().then(function(user){
+    new Promise(function(resolve,reject){
+        UM.paramCheck();
+        UM.typeCheck();
+        resolve();
+    }).then(function(){
+        return UM.buildUser()
+    }).then(function(user){
         return UM.setUserACL(user)
     }).then(function (newuser) {
         return UM.relationGroup(newuser)
@@ -64,6 +69,8 @@ router.put('/', cors(corsOptions), function(req, res, next) {
     AV.User.become(UM.sessionToken).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
+        UM.paramCheck();
+        UM.typeCheck();
         return UM.updateUser();
     }).then(function () {
         res.status(201);
@@ -80,11 +87,11 @@ router.delete('/', cors(corsOptions), function(req, res, next) {
     AV.User.become(UM.sessionToken).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
+        UM.paramCheck();
         UM.typeCheck();
         return UM.deleteAllUser()
     }).then(function () {
         res.status(204);
-        // response get null
         res.send("success, delete user successfully");
     }).catch(function (error) {
         res.status(error.code);

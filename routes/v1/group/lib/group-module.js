@@ -63,8 +63,52 @@ function groupInterface(req) {
             }
         }
         return 'true'
-
     };
+
+    this.paramsCheck = function(){
+        switch (req.method){
+            case 'POST':
+                req.body.forEach(function(val){
+                    if(!val.name){
+                        throw new AV.Error(403,"error, miss group name")
+                    }
+                    if(!val.user && !val.groupInfo){
+                        throw new AV.Error(403,"error, params include user or groupInfo at least one")
+                    }
+                });
+                break;
+            case 'PUT':
+                req.body.forEach(function(val){
+
+                    if(!val.name){
+                        throw new AV.Error(403,"error, miss group name")
+                    }else if(Object.prototype.toString.call(val.name)!="[object String]"){
+                        throw new AV.Error(403,"error, invalid param in name")
+                    }
+                    if(!val.user && !val.groupInfo && !val.newName){
+                        throw new AV.Error(403,"error, params include newName,user groupInfo at least one")
+                    }else{
+                        if(val.user){
+                            if(Object.prototype.toString.call(val.user)!="[object Array]"){
+                                throw new AV.Error(403,"error, invalid param in user")
+                            }   
+                        }
+                        if(val.groupInfo){
+                            if(Object.prototype.toString.call(val.groupInfo)!="[object String]"){
+                                throw new AV.Error(403,"error, invalid param in groupInfo")
+                            }
+                        }
+                        if(val.newName){
+                            if(Object.prototype.toString.call(val.newName)!="[object String]"){
+                                throw new AV.Error(403,"error, invalid param in newName")
+                            }
+                        }
+                    }
+                });
+                break;
+        }
+        return true
+    }
 
     this.getGroup = function (select) {
         var skip = this.paramArray.skip.value;
@@ -96,7 +140,6 @@ function groupInterface(req) {
     };
 
     var relate_GroupToUser = function (User,newGroup) {
-
         var addObject = [];
         return new Promise(function (resolve, reject) {
             if(User.length >0) {
@@ -158,14 +201,32 @@ function groupInterface(req) {
         return new Promise(function (resolve,reject) {
             var postInfo = that.paramArray.body.value;
             async.map(postInfo,function (current,callback) {
-                buildUpOneGroup(current).then(function(arr){
+
+                transformToObject(current.user, '_User', 'username', that.sessionToken).then(function (objectUsers) {
+                    console.log('AccessLink-Platform /group/post#relate_GroupToUser objectUsers', objectUsers);
+                    //make sure all Users are right and transformToObject successfully
+                    if (current.user == undefined || (objectUsers.length > 0 && objectUsers.length == current.user.length)) {
+                    }
+                    else {
+                        // reject(new AV.Error(403, 'Invalid user'))
+                        throw(new AV.Error(403, 'Invalid user'))
+                    }
+                }).then(function(){
+                    return buildUpOneGroup(current)
+                }).then(function(arr){
                     var admin = arr[1];
                     var group_admin = [that.login_username];
                     var group_user;
                     if(Array.isArray(admin)){
                         group_user = arr[1].concat(that.login_username);
+                    }else{
+                        group_user = [that.login_username]
                     }
-                    return relateGroupRoleToUser(arr[0],group_user,admin,group_admin)
+                    if(current.user == undefined){
+                        return
+                    }else{
+                        return relateGroupRoleToUser(arr[0],group_user,admin,group_admin)
+                    }
                 }).catch(function(error){
                     return dealBuildGroupErr(error)
                 }).then(function (result) {
@@ -214,6 +275,9 @@ function groupInterface(req) {
             buildObject.push(relate_GroupToUser(group_user, NewGroupObject));
             buildObject.push(relate_UserToRole(admin, NewGroupObject.id, "admin_"));
             buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"))
+        }else{
+            buildObject.push(relate_GroupToUser(group_user, NewGroupObject));
+            buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"))  
         }
         return Promise.all(buildObject).then(function (result) {
             var addObject = [];
@@ -226,6 +290,8 @@ function groupInterface(req) {
             }).catch(function(error){
                 throw error
             });
+        }).catch(function(error){
+            throw error
         })
     }
 
@@ -323,11 +389,6 @@ function groupInterface(req) {
                 addObject.push(currentGroupObject);
                 if(Array.isArray(newUserArr))
                     dealObject.push(dealNewUserArr(currentGroupObject,newUserArr))
-                else {
-                    if(typeof newUserArr == 'undefined') {
-                        reject(new AV.Error(403, 'Invalid user'));
-                    }
-                }
                 //judge whether newUserArr,groupInfo At least one
                 if(typeof newUserArr == 'undefined' && typeof groupInfo == 'undefined' && 
                     typeof GroupNewName == 'undefined'){
@@ -439,7 +500,10 @@ function groupInterface(req) {
                             reject(new AV.Error(401, 'no authority to update group'));
                         }
                         else if (error.message.indexOf('Forbidden to delete by class') > -1) {
-                            reject(new AV.Error(401, 'no authority to delete group'));
+                            reject(new AV.Error(401, 'no authority to update group'));
+                        }
+                        else if (error.message.indexOf("Forbidden writing by object's ACL") > -1) {
+                            reject(new AV.Error(401, 'no authority to update group'));
                         }
                         else {
                             reject(new AV.Error(401, 'there is a server error'));
@@ -511,8 +575,12 @@ function groupInterface(req) {
                 return AV.Object.destroyAll(deleteInfo,{'sessionToken':that.sessionToken}).then(function () {
                     resolve("success, delete success");
                 },function (error) {
+                    console.log("AccessLink-Platform /group/delete# error", error.message)
                     if(error.hasOwnProperty('message')) {
                         if (error.message.indexOf('Forbidden to delete by class') > -1) {
+                            reject(new AV.Error(401, 'no authority to delete group'));
+                        }
+                        else if (error.message.indexOf("Forbidden writing by object's ACL") > -1) {
                             reject(new AV.Error(401, 'no authority to delete group'));
                         }
                         else
@@ -528,8 +596,6 @@ function groupInterface(req) {
                 console.error("AccessLink-Platform /group/delete# findAllGroup error",error);
                 reject(error)
             });
-
-
         })
 
     }
