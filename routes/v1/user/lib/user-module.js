@@ -586,8 +586,7 @@ function userModule(req) {
             var phone = verifyInfo.phone;
             if(email == undefined){
                 throw new AV.Error(403,'miss email')
-            }
-            if(email != undefined){
+            }else{
                 AV.User.requestEmailVerify(email).then(function(scs){
                     resolve()
                 }).catch(function(err){
