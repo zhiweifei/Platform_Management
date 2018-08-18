@@ -23,7 +23,7 @@ router.get('/', cors(corsOptions), function(req, res, next) {
     AV.User.become(NM.sessionToken).catch(function(){
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function(){
-        return NM.getOneFiledInfo('WLAN')
+        return NM.getOneFiledInfo('TCP_IP')
     }).then(function (td) {
         var wlanResponse = [];
         td.forEach(function (currentValue) {

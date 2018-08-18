@@ -13,67 +13,6 @@ UserNodeInfoMap_middleTable.afterSave();
 UserNodeInfoMap_middleTable.beforeSave();
 UserNodeInfoMap_middleTable.afterDelete('_User');
 
-
-
-AV.Cloud.afterSave('OperatorInfo', function(request) {
-
-    var data = request.object.toJSON();
-    console.log("AccessLink-Platform_Management OperatorInfo table# save data as",data);
-    var nodeInfoQuery = new AV.Query('NodeInfo');
-    var userQuery = new AV.Query('_User');
-    Promise.all([
-        nodeInfoQuery.get(data.Node.objectId),
-        userQuery.get(data.PostUser.objectId)
-    ]).then(function (result) {
-        data.Node = result[0].get('nodeId');
-        data.PostMail = result[1].get('email');
-        data.PostSMS = result[1].get('mobilePhoneNumber');
-        console.log('AccessLink-Platform_Management OperatorInfo table# event_OperatorInfo_afterSave send data',data);
-        OperatorInfo_event.event.emit('event_OperatorInfo_afterSave', data );
-    });
-
-});
-
-AV.Cloud.afterUpdate('OperatorInfo', function(request) {
-
-    var data = request.object.toJSON();
-    console.log("AccessLink-Platform_Management OperatorInfo table# update data as",data);
-    var nodeInfoQuery = new AV.Query('NodeInfo');
-    var userQuery = new AV.Query('_User');
-    Promise.all([
-        nodeInfoQuery.get(data.Node.objectId),
-        userQuery.get(data.PostUser.objectId)
-    ]).then(function (result) {
-        data.Node = result[0].get('nodeId');
-        data.PostMail = result[1].get('email');
-        data.PostSMS = result[1].get('mobilePhoneNumber');
-        console.log('AccessLink-Platform_Management OperatorInfo table# event_OperatorInfo_afterUpdate send data',data);
-        OperatorInfo_event.event.emit('event_OperatorInfo_afterUpdate', data );
-    });
-
-
-});
-
-AV.Cloud.afterDelete('OperatorInfo', function(request) {
-
-    var data = request.object.toJSON();
-    console.log("AccessLink-Platform_Management OperatorInfo table# delete data as",data);
-    var nodeInfoQuery = new AV.Query('NodeInfo');
-    var userQuery = new AV.Query('_User');
-    Promise.all([
-        nodeInfoQuery.get(data.Node.objectId),
-        userQuery.get(data.PostUser.objectId)
-    ]).then(function (result) {
-        data.Node = result[0].get('nodeId');
-        data.PostMail = result[1].get('email');
-        data.PostSMS = result[1].get('mobilePhoneNumber');
-        console.log('AccessLink-Platform_Management OperatorInfo table## event_OperatorInfo_afterDelete send data',data);
-        OperatorInfo_event.event.emit('event_OperatorInfo_afterDelete', data );
-    });
-
-});
-
-
 AV.Cloud.afterSave('Group', function(request) {
     var GroupObjectId = request.object.id;
     if(!GroupObjectId){
@@ -138,6 +77,17 @@ AV.Cloud.beforeDelete('Group',function (request) {
             console.log('#Group beforeDelete delete data about group success')
         });
     })
+});
+
+AV.Cloud.beforeSave('NodeInfo',function (request) {
+    console.log("#cloud beforeSave NodeInfo request.object",request.object);
+    var roleAcl = new AV.ACL();
+    var objectId = request.object.get('Group').id;
+    roleAcl.setRoleReadAccess('super_admin', true);
+    roleAcl.setRoleReadAccess('group_admin_' + objectId, true);
+    roleAcl.setRoleWriteAccess('group_admin_' + objectId, true);
+    roleAcl.setRoleReadAccess('admin_' + objectId, true);
+    request.object.set('ACL',roleAcl);
 });
 
 AV.Cloud.beforeDelete('NodeInfo',function (request) {

@@ -26,10 +26,11 @@ var OperateModule = function(req){
             break;
         case 'POST':
             paramArray = {
-                nodeId:{type:"[object String]",default:"default",choosable:false},
-                AppKey:{type:"[object String]",default:"default",choosable:false},
+                nodeId:{type:"[object String]",default:false,choosable:false},
+                AppKey:{type:"[object String]",default:false,choosable:false},
+                group:{type:"[object String]",default:false,choosable:false},
                 nodeInfo:{type:"[object String]",default:"default",choosable:true},
-                protocol:{type:"[object String]",default:"default",choosable:true}
+                protocol:{type:"[object String]",default:false,choosable:false}
             };
             for (var i in paramArray) {
                 paramArray[i].value = req.body[i] == undefined ? paramArray[i]["default"] : req.body[i];
@@ -121,45 +122,59 @@ var OperateModule = function(req){
         }
         return nodeInfoQuery.find({'sessionToken':this.sessionToken});
     };
-    
+
+    var determineGroupExist = function (groupname) {
+
+        var groupQuery = new AV.Query('Group');
+        var groupNameArr = [];
+        return groupQuery.find({'sessionToken':that.sessionToken}).then(function (result) {
+            result.forEach(function (currentValue) {
+                var currentJsonObject = currentValue.toJSON();
+                groupNameArr.push(currentJsonObject.name)
+            });
+            if(groupNameArr.indexOf(groupname) > -1){
+                return result[groupNameArr.indexOf(groupname)]
+            }
+            else{
+                throw new AV.Error('403','error related group')
+            }
+        })
+
+    };
+
     this.buildUpNewNode = function () {
 
         return new Promise(function (resolve,reject) {
             var nodeId = that.paramArray.nodeId.value;
+            var bufferNodeId = Buffer.from(nodeId,'hex');
+            if(bufferNodeId.length != 8){
+                throw new AV.Error(403,'error length nodeId')
+            }
             var AppKey = that.paramArray.AppKey.value;
+            var bufferAppKey = Buffer.from(AppKey,'hex');
+            if(bufferAppKey.length != 16){
+                throw new AV.Error(403,'error length AppKey')
+            }
             var nodeInfo = that.paramArray.nodeInfo.value;
             var protocol = that.paramArray.protocol.value;
-            console.log('AccessLink-Platform_Management device management# nodeId AppKey nodeInfo',nodeId,AppKey,nodeInfo);
+            var group = that.paramArray.group.value;
+            console.log('AccessLink-Platform_Management device management# nodeId AppKey nodeInfo',nodeId,AppKey,nodeInfo,group);
             var NodeInfoObject = AV.Object.extend('NodeInfo');
             var NewNodeInfoObject = new NodeInfoObject();
             NewNodeInfoObject.set('nodeId',nodeId);
             NewNodeInfoObject.set('AppKey',AppKey);
-            NewNodeInfoObject.set('WLAN','Unsupport');
-            NewNodeInfoObject.set('Operator','Unsupport');
+            NewNodeInfoObject.set('TCP_IP','Unsupport');
             if(nodeInfo != 'default'){
                 NewNodeInfoObject.set('NodeInfo',nodeInfo);
             }
-            if(protocol != 'default'){
-                NewNodeInfoObject.set('Protocol',nodeInfo);
-            }
-            var GroupUserMapQuery = new AV.Query('GroupUserMap');
-            GroupUserMapQuery.find({'sessionToken':that.sessionToken}).then(function (result) {
-                if(result.length > 0){
-                    console.log('AccessLink-Platform_Management device management# this user has related to Group',result[0]);
-                    NewNodeInfoObject.set('Group',result[0].get('Group'));
-                    // get GroupUserMap ACL and then set ACL for NodeInfo
-                    return result[0].fetch({'includeACL':true},{'useMasterKey':true}).then(function (map) {
-                        NewNodeInfoObject.set('ACL',map.getACL());
-                    });
-                }
-                else{
-                    throw new AV.Error('this user do not relate to Group');
-                }
+            NewNodeInfoObject.set('Protocol',protocol);
+            determineGroupExist(group).then(function (rightGroup) {
+                NewNodeInfoObject.set('Group',rightGroup);
             }).then(function () {
-                NewNodeInfoObject.save(null,{'sessionToken':that.sessionToken}).then(function (todo) {
+                return NewNodeInfoObject.save(null,{'sessionToken':that.sessionToken}).then(function (todo) {
                     console.log('AccessLink-Platform_Management device management# build up new nodeId successfully and objectId is ' + todo.id);
                     resolve('success')
-                });
+                })
             }).catch(function (error) {
                 console.error('AccessLink-Platform_Management device management# build up new nodeId ERROR',error);
                 if(error.hasOwnProperty('message')) {
@@ -233,6 +248,9 @@ var OperateModule = function(req){
                         else if (error.message.indexOf("Invalid value type for field 'AppKey'") > -1) {
                             reject(new AV.Error(403, 'Invalid AppKey'));
                         }
+                        else if(error.message.indexOf('Forbidden writing by object') > -1){
+                            reject(new AV.Error(403, 'no authority to update nodeInfo'));
+                        }
                         else {
                             reject(new AV.Error(401, 'there is a server error'))
                         }
@@ -265,6 +283,9 @@ var OperateModule = function(req){
                     if (error.message.indexOf('Forbidden to delete by class') > -1) {
                         reject(new AV.Error(403, 'no authority to delete nodeInfo'));
                     }
+                    else if(error.message.indexOf('Forbidden writing by object') > -1){
+                        reject(new AV.Error(403, 'no authority to delete nodeInfo'));
+                    }
                     else
                     {
                         reject(new AV.Error(401, 'there is a server error'));
@@ -284,7 +305,7 @@ var OperateModule = function(req){
         return queryNodeInfo.count({'sessionToken': that.sessionToken})
 
     };
-    
+
     this.getOneFiledInfo = function (select) {
 
         var skip = this.paramArray.skip.value;

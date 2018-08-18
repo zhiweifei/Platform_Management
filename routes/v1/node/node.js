@@ -46,7 +46,7 @@ router.get('/', cors(corsOptions), function(req, res, next) {
 
 router.post('/', cors(corsOptions), function(req, res, next) {
     var NM = new nodeInfo_module(req);
-    AV.User.become(NM.sessionToken).catch(function(){
+    AV.User.become(NM.sessionToken).catch(function(error){
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
         NM.typeCheck();
@@ -55,7 +55,7 @@ router.post('/', cors(corsOptions), function(req, res, next) {
         res.status(201);
         res.send('build nodeInfo successfully');
     }).catch(function (error) {
-        console.error('AccessLink-Platform_Management device management /node/put #error',error);
+        console.error('AccessLink-Platform_Management device management /node/post #error',error);
         res.status(error.code);
         res.send(error.message);
     });
