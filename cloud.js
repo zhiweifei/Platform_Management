@@ -92,7 +92,15 @@ AV.Cloud.afterSave('Group', function(request) {
         buildGroupAdminRole.set('Group', request.object);
         buildGroupAdminRole.setACL(setDataAcl([superRoleName,newGroupRoleName,newGroupAdminRoleName]));
         var GroupObject = AV.Object.createWithoutData('Group', GroupObjectId);
-        GroupObject.set('ACL',setDataAcl([superRoleName,newGroupRoleName]));
+        var roleAcl = new AV.ACL();
+        roleAcl.setRoleWriteAccess(superRoleName, true);
+        roleAcl.setRoleReadAccess(superRoleName, true);
+        roleAcl.setRoleWriteAccess(newGroupRoleName, true);
+        roleAcl.setRoleReadAccess(newGroupRoleName, true);
+        // roleAcl.setRoleWriteAccess(current, true);
+        roleAcl.setRoleReadAccess(newGroupAdminRoleName, true);
+        // GroupObject.set('ACL',setDataAcl([superRoleName,newGroupRoleName]));
+        GroupObject.set('ACL', roleAcl);
         //To prevent program from entering cloud function" dead circulation "
         GroupObject.disableBeforeHook();
         GroupObject.disableAfterHook();
