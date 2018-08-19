@@ -394,6 +394,7 @@ describe.only('Post /v1/user', () => {
 		let userPost = new AppPOST(devurl, userPath, port)
 		userPost.POST(newUser,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, build up new User successfully")
 				done()
@@ -526,6 +527,7 @@ describe('Put /v1/user', () => {
 		userPut.setSessionToken(sessionToken)
 		userPut.PUT(newUser,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, update user Info successfully")
 				done()
@@ -544,6 +546,7 @@ describe('Put /v1/user', () => {
 		userPut.setSessionToken(sessionToken)
 		userPut.PUT(newUser,
 			(data: any, statusCode: number) => {
+                console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, update user Info successfully")
 				done()
@@ -562,6 +565,7 @@ describe('Put /v1/user', () => {
 		userPut.setSessionToken(sessionToken)
 		userPut.PUT(newUser,
 			(data: any, statusCode: number) => {
+                console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("there is a server error")
 				done()
@@ -580,6 +584,7 @@ describe('Put /v1/user', () => {
 		userPut.setSessionToken(sessionToken)
 		userPut.PUT(newUser,
 			(data: any, statusCode: number) => {
+                console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("there is a server error")
 				done()
@@ -697,8 +702,8 @@ describe('Delete /v1/user', () => {
 		userDelete.DELETE(deleteParam,
 			(data: any, statusCode: number) => {
 				console.log('data statusCode',data,statusCode);
-				statusCode.should.equal(204)
-				data.should.equal('error, invalid param in username')
+				statusCode.should.equal(403)
+				data.should.equal('error, miss username')
 				done()
 			})
 	})
@@ -725,6 +730,7 @@ describe('Delete /v1/user', () => {
 		userDelete.setSessionToken(sessionToken)
 		userDelete.DELETE(deleteParam,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(404)
 				data.should.equal('some user not find')
 			done()
@@ -741,6 +747,7 @@ describe('Delete /v1/user', () => {
 		userDelete.setSessionToken(sessionToken)
 		userDelete.DELETE(deleteParam,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal('error, invalid param in username')
 				done()
@@ -770,7 +777,8 @@ describe('Delete /v1/user', () => {
 		userDelete.setSessionToken(sessionToken)
 		userDelete.DELETE(deleteParam,
 			(data: any, statusCode: number) => {
-				statusCode.should.equal(204)
+                statusCode.should.equal(401)
+                data.should.equal('no authority to delete user')
 				done()
 			})
 	})

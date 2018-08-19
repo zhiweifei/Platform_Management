@@ -56,7 +56,7 @@ describe('POST /v1/login', () => {
 			(data: any, statusCode: number) => {
 				console.log('login# data,statusCode',data,statusCode);
 				//data.should.have.property('error');
-				data.should.equal('Could not find user.')
+				data.should.equal('Could not find user. ')
 				statusCode.should.equal(211)
 				done()
 			});
@@ -67,8 +67,8 @@ describe('POST /v1/login', () => {
 			(data: any, statusCode: number) => {
 				console.log('login# data,statusCode',data,statusCode);
 				//data.should.have.property('error');
-				data.should.equal('Internal server error. No information available.')
-				statusCode.should.equal(211)
+				data.should.equal('Internal server error. No information available. ')
+				statusCode.should.equal(401)
 				done()
 			});
 	});

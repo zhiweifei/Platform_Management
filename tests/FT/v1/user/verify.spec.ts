@@ -33,29 +33,42 @@ catch(e){
 describe('Put /v1/user/verify', () => {
 	let sessionToken = require('../config').sessionToken.test
 	let userData: any = {
-		username: "test",
-		email: "test@qq.com",
-		phone : 13423455555
+		email: "1421752582@qq.com",
+		phone : 15258876369
 	}
 
 	it("verify email & should return 201", (done) => {
 		let params: UserVerifyParameter = {
-			username: userData.username,
 			email: userData.email
 		}
 		let userVerifyPost = new AppPOST(devurl, userPath, port)
 		userVerifyPost.setSessionToken(sessionToken)
 		userVerifyPost.POST(params,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, verify email or phone success")
 				done()
 			})
 	})
 
-	it("verify phone & should return 201", (done) => {
+    it("verify email but verify more & should return 401", (done) => {
+        let params: UserVerifyParameter = {
+            email: userData.email
+        }
+        let userVerifyPost = new AppPOST(devurl, userPath, port)
+        userVerifyPost.setSessionToken(sessionToken)
+        userVerifyPost.POST(params,
+            (data: any, statusCode: number) => {
+                console.log('data statusCode',data,statusCode);
+                statusCode.should.equal(401)
+                data.should.equal("请不要往同一个邮件地址发送太多邮件。 ")
+                done()
+            })
+    })
+
+	it.skip("verify phone & should return 201", (done) => {
 		let params: UserVerifyParameter = {
-			username: userData.username,
 			phone: userData.phone
 		}
 		let userVerifyPost = new AppPOST(devurl, userPath, port)
@@ -71,21 +84,21 @@ describe('Put /v1/user/verify', () => {
 
 	it("Invalid email & should return 403", (done) => {
 		let params: UserVerifyParameter = {
-			username: userData.username,
 			email: "wrong"
 		}
 		let userVerifyPost = new AppPOST(devurl, userPath, port)
 		userVerifyPost.setSessionToken(sessionToken)
 		userVerifyPost.POST(params,
 			(data: any, statusCode: number) => {
-				statusCode.should.equal(403)
-				data.should.equal("Invalid username")
+				console.log('data statusCode',data,statusCode);
+				statusCode.should.equal(205)
+				data.should.equal("An user with the specified email was not found. ")
 				done()
 			})
 	})
 
 
-	it("Invalid phone & should return 403", (done) => {
+	it.skip("Invalid phone & should return 403", (done) => {
 		let params: UserVerifyParameter = {
 			username: userData.username,
 			phone: 1245464
@@ -108,7 +121,7 @@ describe('Put /v1/user/verify', () => {
 		userVerifyPost.POST(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(403)
-				data.should.equal("Invalid newPassword")
+				data.should.equal("miss email")
 				done()
 			})
 	})
