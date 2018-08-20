@@ -103,8 +103,11 @@ function userModule(req) {
                     } 
                 }
                 if(req.originalUrl.split("?")[0]=="/v1/user/password"){
-                    if(!val.password){
-                        throw new AV.Error(403,"error, miss password")
+                    if(!val.oldPassword){
+                        throw new AV.Error(403,"error, miss oldPassword")
+                    } 
+                    if(!val.newPassword){
+                        throw new AV.Error(403,"error, miss newPassword")
                     } 
                 }
                 if(req.originalUrl.split("?")[0]=="/v1/user/verify"){
@@ -271,13 +274,15 @@ function userModule(req) {
             var tableQuery = new AV.Query("GroupUserMap");
             tableQuery.equalTo("User", user);
             tableQuery.find({useMasterKey: true}).then(function(findResult){
-                console.log("AccessLink-Platform find group to setACL", findResult[0].toJSON().Group.objectId)
                 var roleAcl = new AV.ACL();
                 roleAcl.setRoleWriteAccess('super_admin', true);
                 roleAcl.setRoleReadAccess('super_admin', true);
                 roleAcl.setWriteAccess(user.id, true);
                 roleAcl.setReadAccess(user.id, true);
-                roleAcl.setRoleReadAccess('group_admin_' + findResult[0].toJSON().Group.objectId, true);
+                if(findResult.length > 0){
+                    console.log("AccessLink-Platform find group to setACL", findResult[0].toJSON().Group.objectId)
+                    roleAcl.setRoleReadAccess('group_admin_' + findResult[0].toJSON().Group.objectId, true);
+                }
                 user.set('ACL', roleAcl);
                 user.save(null,{useMasterKey: true}).then(function(){
                     resolve()
