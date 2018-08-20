@@ -49,9 +49,9 @@ router.post('/', cors(corsOptions), function(req, res, next) {
     }).then(function(){
         return UM.buildUser()
     }).then(function(user){
-        return UM.setUserACL(user)
+        return UM.relationGroup(user)
     }).then(function (newuser) {
-        return UM.relationGroup(newuser)
+        return UM.setUserACL(newuser)
     },function (error) {
         throw error
     }).then(function () {
