@@ -768,7 +768,7 @@ describe('Delete /v1/group', () => {
 		let sessionToken = require('../config').sessionToken.test_group
 		let groupDelete = new AppDELETE(devurl, groupPath, port)
 		groupDelete.setSessionToken(sessionToken)
-		groupDelete.DELETE({"name": ["test_group"]},
+		groupDelete.DELETE({"name": [groupData.name]},
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(404)
 				data.should.equal('error,some group not find')

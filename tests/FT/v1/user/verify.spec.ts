@@ -20,7 +20,7 @@ const port = 80;
 describe('Put /v1/user/verify', () => {
 	let sessionToken = require('../config').sessionToken.test
 	let userData: any = {
-		email: "testtest@qq.com",
+		email: "testcase@qq.com",
 		phone : 13423455555
 	}
 
@@ -56,7 +56,7 @@ describe('Put /v1/user/verify', () => {
 
 	it("Invalid email & should return 403", (done) => {
 		let params: UserVerifyParameter = {
-			email: "Invalid"
+			email: "InvalidEmail"
 		}
 		let userVerifyPost = new AppPOST(devurl, userPath, port)
 		userVerifyPost.setSessionToken(sessionToken)
