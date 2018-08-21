@@ -48,7 +48,7 @@ function userModule(req) {
                 phone:{type:"[object String]",default:undefined}
             };
             for (var i in paramArray) {
-                paramArray[i].value = req.body == undefined ? paramArray[i]["default"] : req.body;
+                paramArray[i].value = req.body == undefined ? paramArray[i]["default"] : req.body[i];
             }
             break;
         case 'DELETE':
@@ -66,7 +66,7 @@ function userModule(req) {
     this.typeCheck = function(){
         var paramsArray = this.paramArray;
         for(var i in paramsArray){
-            if(paramsArray[i].val != undefined && Object.prototype.toString.call(paramsArray[i].value)!=paramsArray[i].type){
+            if(paramsArray[i].value != undefined && Object.prototype.toString.call(paramsArray[i].value)!=paramsArray[i].type){
                 throw new AV.Error(403,"error, invalid param in " + i);
             }
         }
@@ -103,8 +103,11 @@ function userModule(req) {
                     } 
                 }
                 if(req.originalUrl.split("?")[0]=="/v1/user/password"){
-                    if(!val.password){
-                        throw new AV.Error(403,"error, miss password")
+                    if(!val.oldPassword){
+                        throw new AV.Error(403,"error, miss oldPassword")
+                    } 
+                    if(!val.newPassword){
+                        throw new AV.Error(403,"error, miss newPassword")
                     } 
                 }
                 if(req.originalUrl.split("?")[0]=="/v1/user/verify"){
@@ -240,7 +243,7 @@ function userModule(req) {
                                 addObject = addObject.concat(current);
                             });
                             AV.Object.saveAll(addObject,{useMasterKey: true}).then(function () {
-                                resolve('success')
+                                resolve(newuser)
                             },function (error) {
                                 if(error.hasOwnProperty('message')) {
                                     if (error.message.indexOf('this middle table data already exist') > -1) {
@@ -261,16 +264,33 @@ function userModule(req) {
                     reject(error)
                 })
             }else{
-                resolve("success")
+                resolve(newuser)
             }
         })
     }
 
     this.setUserACL = function(user){
-        var AclArr = [];
-        AclArr = ['super_admin'];
-        user.setACL(setDataAcl(AclArr,[user.id]));
-        return user.save(null,{useMasterKey: true});
+        return new Promise(function(resolve, reject){
+            var tableQuery = new AV.Query("GroupUserMap");
+            tableQuery.equalTo("User", user);
+            tableQuery.find({useMasterKey: true}).then(function(findResult){
+                var roleAcl = new AV.ACL();
+                roleAcl.setRoleWriteAccess('super_admin', true);
+                roleAcl.setRoleReadAccess('super_admin', true);
+                roleAcl.setWriteAccess(user.id, true);
+                roleAcl.setReadAccess(user.id, true);
+                if(findResult.length > 0){
+                    console.log("AccessLink-Platform find group to setACL", findResult[0].toJSON().Group.objectId)
+                    roleAcl.setRoleReadAccess('group_admin_' + findResult[0].toJSON().Group.objectId, true);
+                }
+                user.set('ACL', roleAcl);
+                user.save(null,{useMasterKey: true}).then(function(){
+                    resolve()
+                }).catch(function(err){
+                    reject(err)
+                })
+            })
+        })
     }
 
     this.buildUser = function () {
@@ -326,6 +346,9 @@ function userModule(req) {
                     }
                     else if (error.message.indexOf("Invalid value type for field 'phone'") > -1) {
                         reject(new AV.Error(403, 'Invalid phone'));
+                    }
+                    else if (error.message.indexOf("group not found") > -1) {
+                        reject(new AV.Error(404, 'group not found'));
                     }
                     else
                     {

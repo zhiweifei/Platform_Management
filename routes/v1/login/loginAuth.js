@@ -29,7 +29,7 @@ router.post('/', cors(corsOptions), function(req, res, next) {
         res.send(userinfo);
     }).catch(function(err) {
         console.error("LoginAuth# error",err);
-        res.status(err.code == 1? 401:error.code);
+        res.status(err.code == 1? 401:err.code);
         res.send(err.message.replace(/\[[^\)]*\]/g,""));
     });
 });

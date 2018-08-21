@@ -71,7 +71,7 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
                     var setAcl = mergeAcl(filed1_ACL_Json['permissionsById'], filed2_ACL_Json['permissionsById'])
                     request.object.set('ACL',setAcl);
                     return request.object.save(null,{'useMasterKey':true}).then(function()  {
-                        filed2_Object.set('ACL',setAcl);
+                        // filed2_Object.set('ACL',setAcl);
                         return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
                             console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave set ACL ok");
                         })
