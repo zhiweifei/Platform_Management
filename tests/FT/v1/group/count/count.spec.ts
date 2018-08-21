@@ -45,14 +45,14 @@ describe('Get /v1/group/count', () => {
 		})
 	})
 
-	it("normal admin that username is test & should return {count:0}", (done) => {
+	it("normal admin that username is test & should return {count:1}", (done) => {
 		let sessionToken = require('../../config').sessionToken.test
 		let groupGet = new AppGET(devurl, groupPath, port)
 		groupGet.setSessionToken(sessionToken)
 		groupGet.GET("",(data: any, statusCode: number) => {
 			statusCode.should.equal(200)
 			data.should.have.property("count")
-			data.count.should.equal(0)
+			data.count.should.equal(1)
 			done();
 		})
 	})

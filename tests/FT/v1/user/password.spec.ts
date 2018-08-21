@@ -27,7 +27,7 @@ try{
 	})
 }
 catch(e){
-	console.error("Check init error:", e)
+	//console.error("Check init error:", e)
 }
 
 
@@ -122,7 +122,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(403)
-				data.should.equal("Invalid username")
+				data.should.equal("error, miss username")
 				done()
 			})
 	})
@@ -138,7 +138,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(403)
-				data.should.equal("Invalid oldPassword")
+				data.should.equal("error, miss oldPassword")
 				done()
 			})
 	})
@@ -153,7 +153,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(403)
-				data.should.equal("Invalid newPassword")
+				data.should.equal("error, miss newPassword")
 				done()
 			})
 	})
@@ -206,7 +206,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(401)
-				data.should.equal("there is a server error")
+				data.should.equal("no authority to update the user")
 				done()
 			})
 	})

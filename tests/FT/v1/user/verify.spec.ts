@@ -16,25 +16,12 @@ const loginPath = "/v1/login"
 //const port = parseInt(process.env.PORT || require("../config").port)
 const devurl = "protocol-access.leanapp.cn";
 const port = 80;
-class _User extends AV.Object {}
-AV.Object.register(_User)
-try{
-	AV.init({
-		appId: appID,
-		appKey: appkey,
-		masterKey: masterKey
-	})
-}
-catch(e){
-	console.error("Check init error:", e)
-}
-
 
 describe('Put /v1/user/verify', () => {
 	let sessionToken = require('../config').sessionToken.test
 	let userData: any = {
-		email: "1421752582@qq.com",
-		phone : 15258876369
+		email: "testtest@qq.com",
+		phone : 13423455555
 	}
 
 	it("verify email & should return 201", (done) => {
@@ -51,21 +38,6 @@ describe('Put /v1/user/verify', () => {
 				done()
 			})
 	})
-
-    it("verify email but verify more & should return 401", (done) => {
-        let params: UserVerifyParameter = {
-            email: userData.email
-        }
-        let userVerifyPost = new AppPOST(devurl, userPath, port)
-        userVerifyPost.setSessionToken(sessionToken)
-        userVerifyPost.POST(params,
-            (data: any, statusCode: number) => {
-                console.log('data statusCode',data,statusCode);
-                statusCode.should.equal(401)
-                data.should.equal("请不要往同一个邮件地址发送太多邮件。 ")
-                done()
-            })
-    })
 
 	it.skip("verify phone & should return 201", (done) => {
 		let params: UserVerifyParameter = {
@@ -84,7 +56,7 @@ describe('Put /v1/user/verify', () => {
 
 	it("Invalid email & should return 403", (done) => {
 		let params: UserVerifyParameter = {
-			email: "wrong"
+			email: "Invalid"
 		}
 		let userVerifyPost = new AppPOST(devurl, userPath, port)
 		userVerifyPost.setSessionToken(sessionToken)

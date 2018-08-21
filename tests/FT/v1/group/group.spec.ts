@@ -58,30 +58,30 @@ describe('Get /v1/group', () => {
 		})
 	})
 
-	it.skip("use limit 20 and skip 20 &  should return 20 group data with 20 skip", (done) => {
+	it("use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
 		console.log("Get 40 data at first")
 		let groupQuery: GroupQueryParameter = {
-			limit: 40
+			limit: 20
 		}		
 		let groupGet = new AppGET(devurl, groupPath, port)
 		let dataA: any
 		groupGet.setSessionToken(sessionToken)
 		groupGet.GET(groupQuery, (data: any, statusCode: number) =>{
-			data.length.should.equal(40)
+			data.length.should.equal(20)
 			statusCode.should.equal(200)
 			dataA = data
 			groupGet1.GET(groupQuery1, (data: any, statusCode: number) =>{
-				data.length.should.equal(20)
+				data.length.should.equal(10)
 				statusCode.should.equal(200)
-				expect(data).to.eql(dataA.slice(-20))
+				expect(data).to.eql(dataA.slice(-10))
 				done()
 			})
 		})
 
 		console.log("Skip 20 data and get 20 data, then compare")
 		let groupQuery1: GroupQueryParameter = {
-			limit: 20,
-			skip: 20
+			limit: 10,
+			skip: 10
 		}
 		let groupGet1 = new AppGET(devurl, groupPath, port)
 		groupGet1.setSessionToken(sessionToken)
@@ -281,12 +281,12 @@ describe('Get /v1/group', () => {
 		})
 	})
 
-	it("normal admin that username is test & should return []", (done) => {
+	it("normal admin that username is test & should return group:test_group", (done) => {
 		let sessionToken = require('../config').sessionToken.test
 		let groupGet = new AppGET(devurl, groupPath, port)
 		groupGet.setSessionToken(sessionToken)
 		groupGet.GET("",(data: any, statusCode: number) => {
-			data.length.should.equal(0)
+			data.length.should.equal(1)
 			statusCode.should.equal(200)
 			done();
 		})
@@ -410,7 +410,7 @@ describe('Post /v1/group', () => {
 				data.should.equal(paramError)
 				checkArray.push(param)
 				if(checkArray.indexOf("name") >= 0 && checkArray.indexOf("user") >= 0 &&
-					checkArray.indexOf("groupInfo") >= 0){
+					checkArray.indexOf("groupInfo") >= 0 && checkArray.indexOf("user") >= 0){
 					done()
 				}
 			})
@@ -436,6 +436,12 @@ describe('Post /v1/group', () => {
 			groupInfo: ["Info"]
 		}]
 		paramCheck(wrong_groupInfo, 'Invalid groupInfo', "groupInfo")
+
+		let wrong_BodyInfo = {
+			name: "test",
+			groupInfo: ["Info"]
+		}
+		paramCheck(wrong_BodyInfo, 'error, invalid param in body', "body")
 	})
 
 	it("create group with wrong sessionToken & should return 403 status code", (done) => {
@@ -770,7 +776,7 @@ describe('Delete /v1/group', () => {
 			})
 	})
 
-	it.only("normal admin delete & should return 404 status code", (done) => {
+	it("normal admin delete & should return 404 status code", (done) => {
 		let sessionToken = require('../config').sessionToken.test
 		let groupDelete = new AppDELETE(devurl, groupPath, port)
 		groupDelete.setSessionToken(sessionToken)
