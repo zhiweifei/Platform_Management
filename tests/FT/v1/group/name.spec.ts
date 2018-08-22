@@ -7,14 +7,10 @@ import { sortCommonCheck, sortDateCheck } from "../../lib/sort"
 import querystring = require('querystring');
 import { GroupQueryParameter, GroupPutParameter} from "./lib/parameter"
 
-
-//const devurl = "firefight.leanapp.cn"
 let sessionToken = require('../config').sessionToken.test_super
 const groupNamePath = "/v1/group/name"
-/*const devurl = "localhost"
-const port = parseInt(process.env.PORT || require("../config").port)*/
 
-const devurl = "protocol-access.leanapp.cn";
+const devurl = "protocol-access-test.leanapp.cn";
 const port = 80;
 
 
@@ -191,6 +187,7 @@ describe('Get /v1/group/name', () => {
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET("",(data: any, statusCode: number) => {
+			console.log('data statusCode',data,statusCode);
 			data.forEach(function(val){
 				val.should.have.property("name")
 				val["name"].should.equal("test_group")

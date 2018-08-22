@@ -8,14 +8,8 @@ import querystring = require('querystring');
 import * as AV from 'leancloud-storage';
 import { UserNameGetParameter, UserNamePutParameter} from "./lib/parameter"
 
-const appkey = require('../config').AppKey
-const masterKey = require('../config').MasterKey
-const appIDPath = "/../../../../.leancloud/current_app_id"
-const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const userPath = "/v1/user/name"
-//const devurl = "localhost"
-//const port = parseInt(process.env.PORT || require("../config").port)
-const devurl = "protocol-access.leanapp.cn";
+const devurl = "protocol-access-test.leanapp.cn";
 const port = 80;
 
 describe('Get /v1/user/name', () => {

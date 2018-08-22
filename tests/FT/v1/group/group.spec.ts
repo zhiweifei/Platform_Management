@@ -7,14 +7,12 @@ import { sortCommonCheck, sortDateCheck } from "../../lib/sort"
 import * as AV from 'leancloud-storage';
 import { GroupQueryParameter, GroupBodyParameter, GroupPutParameter} from "./lib/parameter"
 
-// const devurl = "localhost"
-const devurl = "protocol-access.leanapp.cn"
+const devurl = "protocol-access-test.leanapp.cn"
 const appkey = require('../config').AppKey
 const masterKey = require('../config').MasterKey
 const appIDPath = "/../../../../.leancloud/current_app_id"
 const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const groupPath = "/v1/group"
-// const port = parseInt(process.env.PORT || require("../config").port)
 const port = 80
 class Group extends AV.Object {}
 AV.Object.register(Group)
@@ -338,6 +336,7 @@ describe('Post /v1/group', () => {
 		groupPost.setSessionToken(sessionToken)
 		groupPost.POST(newGroup,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, build group successfully")
 				done()
@@ -683,7 +682,8 @@ describe('Delete /v1/group', () => {
 		groupData = {
 			name: "testDeleteGroup" + new Date().getTime(),
 			groupInfo: "testGroup"
-		}
+		};
+		console.log('groupData',groupData.name);
 		deleteGroup.set('name', groupData.name)
 		deleteGroup.set('groupInfo', groupData.groupInfo)
 		deleteGroup.save(null, {sessionToken: sessionToken}).then((objects) => {
@@ -712,8 +712,10 @@ describe('Delete /v1/group', () => {
 	it("use name as specify & should return 204", (done) => {
 		let groupDelete = new AppDELETE(devurl, groupPath, port)
 		groupDelete.setSessionToken(sessionToken)
+		console.log('groupData',groupData.name);
 		groupDelete.DELETE({"name": [groupData.name]},
 			(data: any, statusCode: number) => {
+				console.log('data,statusCode',data,statusCode);
 				statusCode.should.equal(204)
 				done()
 			})

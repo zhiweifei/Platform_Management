@@ -7,15 +7,13 @@ import { sortCommonCheck, sortDateCheck } from "../../lib/sort"
 import querystring = require('querystring');
 import * as AV from 'leancloud-storage';
 import { UserPasswordPutParameter} from "./lib/parameter"
-//const devurl = "localhost"
 const appkey = require('../config').AppKey
 const masterKey = require('../config').MasterKey
 const appIDPath = "/../../../../.leancloud/current_app_id"
 const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const userPath = "/v1/user/password"
 const loginPath = "/v1/login"
-//const port = parseInt(process.env.PORT || require("../config").port)
-const devurl = "protocol-access.leanapp.cn";
+const devurl = "protocol-access-test.leanapp.cn";
 const port = 80;
 class _User extends AV.Object {}
 AV.Object.register(_User)

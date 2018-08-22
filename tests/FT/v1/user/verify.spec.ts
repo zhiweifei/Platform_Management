@@ -6,15 +6,9 @@ import { AppLogin, AppPOST} from "../../lib/http-tools"
 import querystring = require('querystring');
 import * as AV from 'leancloud-storage';
 import { UserVerifyParameter} from "./lib/parameter"
-//const devurl = "localhost"
-const appkey = require('../config').AppKey
-const masterKey = require('../config').MasterKey
-const appIDPath = "/../../../../.leancloud/current_app_id"
-const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const userPath = "/v1/user/verify"
 const loginPath = "/v1/login"
-//const port = parseInt(process.env.PORT || require("../config").port)
-const devurl = "protocol-access.leanapp.cn";
+const devurl = "protocol-access-test.leanapp.cn";
 const port = 80;
 
 describe('Put /v1/user/verify', () => {

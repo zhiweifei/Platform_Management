@@ -3,11 +3,9 @@ import 'chai/register-should'
 import 'mocha'
 import { AppLogin } from "../lib/http-tools"
 
-//const devurl = "localhost";
-const devurl = "protocol-access.leanapp.cn";
+const devurl = "protocol-access-test.leanapp.cn";
 const devurlPath = "/v1/login"
 const config = require('./config');
-//const port = parseInt(process.env.PORT || config.port)
 const port = 80;
 
 let postData =  {

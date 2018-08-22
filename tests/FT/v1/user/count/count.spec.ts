@@ -5,10 +5,8 @@ import { AppPUT, AppGET, AppPOST, AppDELETE } from "../../../lib/http-tools"
 import { UserGetParameter } from "../lib/parameter"
 
 const userPath = "/v1/user/count"
-/*const devurl = "localhost"
-const port = parseInt(process.env.PORT || require("../../config").port)*/
 
-const devurl = "protocol-access.leanapp.cn";
+const devurl = "protocol-access-test.leanapp.cn";
 const port = 80;
 
 describe('Get /v1/user/count', () => {
