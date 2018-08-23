@@ -105,7 +105,7 @@ var OperateModule = function(req){
             if(nodeIds.length!=0){
                 nodeInfoQuery.containedIn('nodeId',nodeIds);
             }else{
-                throw new AV.Error(404,"query id is not in 'nodeIds'!");
+                throw new AV.Error(404,"query nodeId does not exist");
             }
 
         }else{
@@ -189,6 +189,9 @@ var OperateModule = function(req){
                     }
                     else if (error.message.indexOf('Forbidden to create by class') > -1) {
                         reject(new AV.Error(401, 'no authority to build up group'));
+                    }
+                    else if (error.message.indexOf('error related group') > -1) {
+                        reject(new AV.Error(403, 'error related group'));
                     }
                     else {
                         reject(new AV.Error(401, 'there is a server error'));
