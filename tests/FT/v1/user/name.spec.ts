@@ -8,25 +8,9 @@ import querystring = require('querystring');
 import * as AV from 'leancloud-storage';
 import { UserNameGetParameter, UserNamePutParameter} from "./lib/parameter"
 
-const devurl = "localhost"
-const appkey = require('../config').AppKey
-const masterKey = require('../config').MasterKey
-const appIDPath = "/../../../../.leancloud/current_app_id"
-const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const userPath = "/v1/user/name"
-const port = parseInt(process.env.PORT || require("../config").port)
-class _User extends AV.Object {}
-AV.Object.register(_User)
-try{
-	AV.init({
-		appId: appID,
-		appKey: appkey,
-		masterKey: masterKey
-	})
-}
-catch(e){
-	console.error("Check init error:", e)
-}
+const devurl = "protocol-access-test.leanapp.cn";
+const port = 80;
 
 describe('Get /v1/user/name', () => {
 	let sessionToken = require('../config').sessionToken.test_super
@@ -62,16 +46,16 @@ describe('Get /v1/user/name', () => {
 		})
 	})
 
-	it("use limit 20 and skip 20 & should return 20 user data with 20 skip", (done) => {
+	it("use limit 10 and skip 10 & should return 10 user data with 10 skip", (done) => {
 		console.log("Get 40 data at first")
 		let getParameter: UserNameGetParameter = {
-			limit: 40
+			limit: 20
 		}
 		let userNameGet = new AppGET(devurl, userPath, port)
 		let dataA: any
 		userNameGet.setSessionToken(sessionToken)
 		userNameGet.GET(getParameter, (data: any, statusCode: number) => {
-			data.length.should.equal(40)
+			data.length.should.equal(20)
 			statusCode.should.equal(200)
 			data.forEach(function(val){
 				val.should.have.property("username")
@@ -80,21 +64,21 @@ describe('Get /v1/user/name', () => {
 			userNameGet1Test()
 		})
 
-		console.log("Skip 20 data and get 20 data, then compare")
+		console.log("Skip 10 data and get 10 data, then compare")
 		let getParameter1: UserNameGetParameter = {
-			limit: 20,
-			skip: 20
+			limit: 10,
+			skip: 10
 		}
 		let userNameGet1 = new AppGET(devurl, userPath, port)
 		userNameGet1.setSessionToken(sessionToken)
 		function userNameGet1Test(){
-			userNameGet1.GET((data: any, statusCode: number) => {
-				data.length.should.equal(20)
+			userNameGet1.GET(getParameter1,(data: any, statusCode: number) => {
+				data.length.should.equal(10)
 				statusCode.should.equal(200)
 				data.forEach(function(val){
 					val.should.have.property("username")
 				})
-				expect(data).to.eql(dataA.slice(-20))
+				expect(data).to.eql(dataA.slice(-10))
 				done()
 			})
 		}
@@ -142,10 +126,10 @@ describe('Get /v1/user/name', () => {
 	})
 
 	it("Comprehensive test & should return data limit 100 with skip 10, filter data use username as 'user1' , sortby username order as ascend", (done) => {
-		console.log("Get 110 data at first")
+		console.log("Get 20 data at first")
 		let dataA: any
 		let getParameter: UserNameGetParameter = {
-			limit: 110,
+			limit: 20,
 			sortby: "username",
 			order: "asc"
 		}
@@ -158,7 +142,7 @@ describe('Get /v1/user/name', () => {
 		})
 
 		let getParameter1: UserNameGetParameter = {
-			limit: 100,
+			limit: 10,
 			skip: 10,
 			sortby: "username",
 			order: "asc"
@@ -173,10 +157,10 @@ describe('Get /v1/user/name', () => {
 				})
 				
 				console.log("limit check")
-				data.length.should.equal(100)
+				data.length.should.equal(10)
 
 				console.log("skip check")
-				expect(data).to.eql(dataA.slice(-100))
+				expect(data).to.eql(dataA.slice(-10))
 
 				console.log("sortby and order check")
 				sortCommonCheck(data, "asc", "username")
@@ -294,6 +278,7 @@ describe('Put /v1/user/name', () => {
 		userNamePut.setSessionToken(sessionToken)
 		userNamePut.PUT(newUser,
 			(data: any, statusCode: number) => {
+				console.log('data,statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, update user name successfully")
 				done()
@@ -326,7 +311,7 @@ describe('Put /v1/user/name', () => {
 		userNamePut.PUT(newUser,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(401)
-				data.should.equal("there is a server error")
+				data.should.equal("no authority to update the user")
 				done()
 			})
 	})

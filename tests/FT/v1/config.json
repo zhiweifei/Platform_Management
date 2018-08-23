@@ -1,10 +1,10 @@
 {
-	"AppKey" : "zYtQeyI80TnzzaerDIfbTRTU",
-   	"MasterKey": "3zVUQnoKctUXfqxKbv1rmRpf",
+	"AppKey" : "f8Uee7iPYCku1mK4749M7cIw",
+   	"MasterKey": "As4Lke1hbfXaT27rm9NYDVMy",
 	"port" : 3000,
 	"sessionToken": {
 		"test_super": "g15piomoleaq39l5uby634n1y",
-		"test_group":"6whrlr825yuvvhnaoias36ik3",
+		"test_group":"4xn0c18zaj4fujxahpp0edvqn",
 		"test": "8dm8rcnvg2l76w0ddl0kdfwiq",
 		"test_guest": "iey8si27btg5wxerta823o31s"
 	}

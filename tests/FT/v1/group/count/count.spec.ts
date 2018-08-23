@@ -2,9 +2,9 @@ import 'chai/register-should'
 import 'mocha'
 import { AppGET} from "../../../lib/http-tools"
 
-const devurl = "localhost"
-const groupPath = "/v1/group/count"
-const port = parseInt(process.env.PORT || require("../../config").port)
+const groupPath = "/v1/group/count";
+const devurl = "protocol-access-test.leanapp.cn";
+const port = 80;
 
 describe('Get /v1/group/count', () => {
 	let sessionToken = require('../../config').sessionToken.test_super;
@@ -43,14 +43,14 @@ describe('Get /v1/group/count', () => {
 		})
 	})
 
-	it("normal admin that username is test & should return {count:0}", (done) => {
+	it("normal admin that username is test & should return {count:1}", (done) => {
 		let sessionToken = require('../../config').sessionToken.test
 		let groupGet = new AppGET(devurl, groupPath, port)
 		groupGet.setSessionToken(sessionToken)
 		groupGet.GET("",(data: any, statusCode: number) => {
 			statusCode.should.equal(200)
 			data.should.have.property("count")
-			data.count.should.equal(0)
+			data.count.should.equal(1)
 			done();
 		})
 	})

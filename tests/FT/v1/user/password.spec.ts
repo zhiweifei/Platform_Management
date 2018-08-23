@@ -7,14 +7,14 @@ import { sortCommonCheck, sortDateCheck } from "../../lib/sort"
 import querystring = require('querystring');
 import * as AV from 'leancloud-storage';
 import { UserPasswordPutParameter} from "./lib/parameter"
-const devurl = "localhost"
 const appkey = require('../config').AppKey
 const masterKey = require('../config').MasterKey
 const appIDPath = "/../../../../.leancloud/current_app_id"
 const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const userPath = "/v1/user/password"
 const loginPath = "/v1/login"
-const port = parseInt(process.env.PORT || require("../config").port)
+const devurl = "protocol-access-test.leanapp.cn";
+const port = 80;
 class _User extends AV.Object {}
 AV.Object.register(_User)
 try{
@@ -25,7 +25,7 @@ try{
 	})
 }
 catch(e){
-	console.error("Check init error:", e)
+	//console.error("Check init error:", e)
 }
 
 
@@ -47,7 +47,7 @@ describe('Put /v1/user/password', () => {
 			acl.setRoleReadAccess(administratorRole, true)
 			acl.setRoleWriteAccess(administratorRole, false)
 
-			let group_admin_test_groupRole = new AV.Role('group_admin_5afe32a39f54543b319f0459')
+			let group_admin_test_groupRole = new AV.Role('group_admin_5b764f0efb4ffe0058960688')
 			acl.setRoleReadAccess(group_admin_test_groupRole, true)
 			acl.setRoleWriteAccess(group_admin_test_groupRole, false)
 
@@ -120,7 +120,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(403)
-				data.should.equal("Invalid username")
+				data.should.equal("error, miss username")
 				done()
 			})
 	})
@@ -136,7 +136,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(403)
-				data.should.equal("Invalid oldPassword")
+				data.should.equal("error, miss oldPassword")
 				done()
 			})
 	})
@@ -151,7 +151,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(403)
-				data.should.equal("Invalid newPassword")
+				data.should.equal("error, miss newPassword")
 				done()
 			})
 	})
@@ -204,7 +204,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(401)
-				data.should.equal("there is a server error")
+				data.should.equal("no authority to update the user")
 				done()
 			})
 	})

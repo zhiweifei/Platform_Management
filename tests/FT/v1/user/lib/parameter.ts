@@ -11,6 +11,7 @@ export interface UserPostParameter {
 	username: string
 	password: string
 	userInfo?: string
+	group?:string
 	email?: string
 	phone?: string
 }
@@ -19,6 +20,7 @@ export interface UserPutParameter {
 	username: string
 	newName?: string
 	userInfo?: string
+	group?:string
 	email?: string
 	phone?: string
 }
@@ -56,6 +58,12 @@ export interface UserPasswordPutParameter {
 	username: string
 	oldPassword: string
 	newPassword: string
+}
+
+export interface UserVerifyParameter {
+	username: string
+	email?: string
+	phone?: string
 }
 
 export interface UserGroupGetParameter extends UserGetParameter{

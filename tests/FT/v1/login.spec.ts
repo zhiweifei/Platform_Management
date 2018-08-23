@@ -3,10 +3,10 @@ import 'chai/register-should'
 import 'mocha'
 import { AppLogin } from "../lib/http-tools"
 
-const devurl = "localhost"
+const devurl = "protocol-access-test.leanapp.cn";
 const devurlPath = "/v1/login"
 const config = require('./config');
-const port = parseInt(process.env.PORT || config.port)
+const port = 80;
 
 let postData =  {
 	'username' : "test",
@@ -17,6 +17,10 @@ let postWrongUsername = {
 	'username' : "wrong",
 	'password': "test"
 };
+let postErrorUsername = {
+	'username' : "testwrong",
+	'password': "test"
+};
 let postWrongPassword = {
 	'username' : "test",
 	'password': "wrong"
@@ -25,7 +29,8 @@ let postWrongPassword = {
 
 describe('POST /v1/login', () => {
 
-	let appLogin = new AppLogin(devurl, devurlPath, port)
+	let appLogin = new AppLogin(devurl, devurlPath, port);
+	console.log('appLogin',appLogin);
 	afterEach(function(done) {
 		this.timeout(7000)
 		console.log("Waiting 6s to avoid too many request error")
@@ -44,13 +49,24 @@ describe('POST /v1/login', () => {
 			});
 	});
 
-	it('Give wrong username, should Could not find user.', (done) => {
+	it('Give error username, should Could not find user.', (done) => {
+		appLogin.login(postErrorUsername,
+			(data: any, statusCode: number) => {
+				console.log('login# data,statusCode',data,statusCode);
+				//data.should.have.property('error');
+				data.should.equal('Could not find user. ')
+				statusCode.should.equal(211)
+				done()
+			});
+	});
+
+	it('Give wrone username, should Could not find user.', (done) => {
 		appLogin.login(postWrongUsername,
 			(data: any, statusCode: number) => {
 				console.log('login# data,statusCode',data,statusCode);
 				//data.should.have.property('error');
-				data.should.equal('Could not find user.')
-				statusCode.should.equal(211)
+				data.should.equal('Internal server error. No information available. ')
+				statusCode.should.equal(401)
 				done()
 			});
 	});
@@ -59,7 +75,7 @@ describe('POST /v1/login', () => {
 		appLogin.login(postWrongPassword,
 			(data: any, statusCode: number) => {
 				console.log('login# data,statusCode',data,statusCode);
-				data.should.equal('The username and password mismatch.')
+				data.should.equal('The username and password mismatch. ');
 				statusCode.should.equal(210)
 				done()
 			});

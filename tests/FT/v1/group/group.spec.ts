@@ -7,14 +7,12 @@ import { sortCommonCheck, sortDateCheck } from "../../lib/sort"
 import * as AV from 'leancloud-storage';
 import { GroupQueryParameter, GroupBodyParameter, GroupPutParameter} from "./lib/parameter"
 
-// const devurl = "localhost"
-const devurl = "device-management.leanapp.cn"
+const devurl = "protocol-access-test.leanapp.cn"
 const appkey = require('../config').AppKey
 const masterKey = require('../config').MasterKey
 const appIDPath = "/../../../../.leancloud/current_app_id"
 const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const groupPath = "/v1/group"
-// const port = parseInt(process.env.PORT || require("../config").port)
 const port = 80
 class Group extends AV.Object {}
 AV.Object.register(Group)
@@ -32,21 +30,12 @@ catch(e){
 describe('Get /v1/group', () => {
 	let sessionToken = require('../config').sessionToken.test_super
 
-	it.skip("default parameter should return 1000 group data", (done) => {
+	it("default parameter should return 1000 group data by descend", (done) => {
 		let groupGet = new AppGET(devurl, groupPath, port)
 		groupGet.setSessionToken(sessionToken)
 		groupGet.GET("",(data: any, statusCode: number) =>{
-			data.length.should.equal(1000)
-			statusCode.should.equal(200)
-			done()
-		})
-	})
-
-	it.skip("default parameter should return 1000 group data by descend", (done) => {
-		let groupGet = new AppGET(devurl, groupPath, port)
-		groupGet.setSessionToken(sessionToken)
-		groupGet.GET("",(data: any, statusCode: number) =>{
-			data.length.should.equal(1000)
+			//data.length.should.equal(1000)
+			expect(data.length).to.be.at.most(1000)
 			statusCode.should.equal(200)
 			//Check if sortby created time and use descend
 			sortDateCheck(data, "dsc", "createAt")
@@ -54,7 +43,7 @@ describe('Get /v1/group', () => {
 		})
 	})
 
-	it.skip("use limit 20 &  should return 20 group data", (done) => {
+	it("use limit 20 &  should return 20 group data", (done) => {
 		let groupQuery: GroupQueryParameter = {
 			limit: 20
 		}
@@ -67,30 +56,30 @@ describe('Get /v1/group', () => {
 		})
 	})
 
-	it.skip("use limit 20 and skip 20 &  should return 20 group data with 20 skip", (done) => {
+	it("use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
 		console.log("Get 40 data at first")
 		let groupQuery: GroupQueryParameter = {
-			limit: 40
+			limit: 20
 		}		
 		let groupGet = new AppGET(devurl, groupPath, port)
 		let dataA: any
 		groupGet.setSessionToken(sessionToken)
 		groupGet.GET(groupQuery, (data: any, statusCode: number) =>{
-			data.length.should.equal(40)
+			data.length.should.equal(20)
 			statusCode.should.equal(200)
 			dataA = data
 			groupGet1.GET(groupQuery1, (data: any, statusCode: number) =>{
-				data.length.should.equal(20)
+				data.length.should.equal(10)
 				statusCode.should.equal(200)
-				expect(data).to.eql(dataA.slice(-20))
+				expect(data).to.eql(dataA.slice(-10))
 				done()
 			})
 		})
 
 		console.log("Skip 20 data and get 20 data, then compare")
 		let groupQuery1: GroupQueryParameter = {
-			limit: 20,
-			skip: 20
+			limit: 10,
+			skip: 10
 		}
 		let groupGet1 = new AppGET(devurl, groupPath, port)
 		groupGet1.setSessionToken(sessionToken)
@@ -290,12 +279,12 @@ describe('Get /v1/group', () => {
 		})
 	})
 
-	it("normal admin that username is test & should return []", (done) => {
+	it("normal admin that username is test & should return group:test_group", (done) => {
 		let sessionToken = require('../config').sessionToken.test
 		let groupGet = new AppGET(devurl, groupPath, port)
 		groupGet.setSessionToken(sessionToken)
 		groupGet.GET("",(data: any, statusCode: number) => {
-			data.length.should.equal(0)
+			data.length.should.equal(1)
 			statusCode.should.equal(200)
 			done();
 		})
@@ -331,8 +320,8 @@ describe('Post /v1/group', () => {
 		groupPost.setSessionToken(sessionToken)
 		groupPost.POST(newGroup,
 			(data: any, statusCode: number) => {
-				statusCode.should.equal(201)
-				data.should.equal("error")
+				statusCode.should.equal(403)
+				data.should.equal("error, params include user or groupInfo at least one");
 				done()
 			})
 	})
@@ -347,8 +336,9 @@ describe('Post /v1/group', () => {
 		groupPost.setSessionToken(sessionToken)
 		groupPost.POST(newGroup,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
-				data.should.equal("success, relate to users successfully")
+				data.should.equal("success, build group successfully")
 				done()
 			})
 
@@ -365,7 +355,7 @@ describe('Post /v1/group', () => {
 		groupPost.POST(newGroup,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(201)
-				data.should.equal("success, relate to users successfully")
+				data.should.equal("success, build group successfully")
 				groupPost.POST(newGroup,
 					(data: any, statusCode: number) => {
 						statusCode.should.equal(403)
@@ -419,7 +409,7 @@ describe('Post /v1/group', () => {
 				data.should.equal(paramError)
 				checkArray.push(param)
 				if(checkArray.indexOf("name") >= 0 && checkArray.indexOf("user") >= 0 &&
-					checkArray.indexOf("groupInfo") >= 0){
+					checkArray.indexOf("groupInfo") >= 0 && checkArray.indexOf("user") >= 0){
 					done()
 				}
 			})
@@ -427,7 +417,8 @@ describe('Post /v1/group', () => {
 
 		console.log("check name")
 		let wrong_name: Array<GroupBodyParameter> = [{
-			name: ["name"]
+			name: ["name"],
+			user: ["test"]
 		}]
 		paramCheck(wrong_name, 'Invalid group name', "name")
 
@@ -444,6 +435,12 @@ describe('Post /v1/group', () => {
 			groupInfo: ["Info"]
 		}]
 		paramCheck(wrong_groupInfo, 'Invalid groupInfo', "groupInfo")
+
+		let wrong_BodyInfo = {
+			name: "test",
+			groupInfo: ["Info"]
+		}
+		paramCheck(wrong_BodyInfo, 'error, invalid param in body', "body")
 	})
 
 	it("create group with wrong sessionToken & should return 403 status code", (done) => {
@@ -479,7 +476,7 @@ describe('Put /v1/group', () => {
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
 				statusCode.should.equal(403)
-				data.should.equal('error,newUserArr,groupInfo,GroupNewName At least one')
+				data.should.equal('error, params include newName,user groupInfo at least one')
 				done()
 			})
 	})
@@ -493,8 +490,9 @@ describe('Put /v1/group', () => {
 		groupPUT.setSessionToken(sessionToken)
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
-				data.should.equal("success, update group Info successfully")
+				data.should.equal("success, update group successfully")
 				done()
 			})
 	})
@@ -508,8 +506,9 @@ describe('Put /v1/group', () => {
 		groupPUT.setSessionToken(sessionToken)
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
-				data.should.equal("success, update group Info successfully")
+				data.should.equal("success, update group successfully")
 				done()
 			})
 	})
@@ -523,8 +522,9 @@ describe('Put /v1/group', () => {
 		groupPUT.setSessionToken(sessionToken)
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
-				data.should.equal("success, update group Info successfully")
+				data.should.equal("success, update group successfully")
 				done()
 			})
 	})
@@ -538,6 +538,7 @@ describe('Put /v1/group', () => {
 		groupPUT.setSessionToken(sessionToken)
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("Invalid user")
 				done()
@@ -553,6 +554,7 @@ describe('Put /v1/group', () => {
 		groupPUT.setSessionToken(sessionToken)
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("Invalid user")
 				done()
@@ -574,44 +576,49 @@ describe('Put /v1/group', () => {
 			})
 	})
 
-	it("update group with unavailable params & should return 403 status code", (done) => {
-		let checkArray: Array<string> = []
-
-		function paramCheck(getParameter: any, paramError: string, param){
-			let groupPut = new AppPUT(devurl, groupPath, port)
-			groupPut.setSessionToken(sessionToken)
-			groupPut.PUT(getParameter, (data: any, statusCode: number) => {
-				statusCode.should.equal(403)
-				data.should.equal(paramError)
-				checkArray.push(param)
-				if(checkArray.indexOf("newName") >= 0 && checkArray.indexOf("user") >= 0
-					&& checkArray.indexOf("groupInfo") >= 0){
-					done()
-				}
-			})
-		}
-
-		console.log("check newName")
-		let wrong_name: Array<GroupPutParameter> = [{
+	it("update group with wrong name & should return 403 status code", (done) => {
+		let updateGroup: Array<GroupPutParameter> = [{
 			name: "test_group",
 			newName: ["group"]
 		}]
-		paramCheck(wrong_name, "Invalid group new name", "newName")
+		let groupPUT = new AppPUT(devurl, groupPath, port)
+		groupPUT.setSessionToken(sessionToken)
+		groupPUT.PUT(updateGroup,
+			(data: any, statusCode: number) => {
+				statusCode.should.equal(403)
+				data.should.equal("error, invalid param in newName");
+				done()
+			})
+	})
 
-		console.log("check user")
-		let wrong_user: Array<GroupPutParameter> = [{
+	it("update group with wrong user & should return 403 status code", (done) => {
+		let updateGroup: Array<GroupPutParameter> = [{
 			name: "test_group",
 			user: "test"
 		}]
-		paramCheck(wrong_user, 'Invalid user', "user")
+		let groupPUT = new AppPUT(devurl, groupPath, port)
+		groupPUT.setSessionToken(sessionToken)
+		groupPUT.PUT(updateGroup,
+			(data: any, statusCode: number) => {
+				statusCode.should.equal(403)
+				data.should.equal("error, invalid param in user");
+				done()
+			})
+	})
 
-		console.log("check groupInfo")
-		let wrong_groupInfo: Array<GroupPutParameter> = [{
+	it("update group with wrong groupInfo & should return 403 status code", (done) => {
+		let updateGroup: Array<GroupPutParameter> = [{
 			name: "test_group",
 			groupInfo: ["Info"]
 		}]
-		paramCheck(wrong_groupInfo, 'Invalid groupInfo', "groupInfo")
-
+		let groupPUT = new AppPUT(devurl, groupPath, port)
+		groupPUT.setSessionToken(sessionToken)
+		groupPUT.PUT(updateGroup,
+			(data: any, statusCode: number) => {
+				statusCode.should.equal(403)
+				data.should.equal("error, invalid param in groupInfo");
+				done()
+			})
 	})
 
 	it("use wrong sessionToken & should return 401 status code", (done) => {
@@ -623,6 +630,7 @@ describe('Put /v1/group', () => {
 		groupPUT.setSessionToken("wrong sessionToken")
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("Invalid SessionToken");
 				done()
@@ -639,8 +647,9 @@ describe('Put /v1/group', () => {
 		groupPUT.setSessionToken(sessionToken)
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
-				statusCode.should.equal(401)
-				data.should.equal("no authority to update group");
+				console.log('data statusCode',data,statusCode);
+				statusCode.should.equal(404)
+				data.should.equal("error,some group is not find");
 				done()
 			})
 	})
@@ -655,8 +664,9 @@ describe('Put /v1/group', () => {
 		groupPUT.setSessionToken(sessionToken)
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
-				statusCode.should.equal(404)
-				data.should.equal("error,some group is not find");
+				console.log('data statusCode',data,statusCode);
+				statusCode.should.equal(401)
+				data.should.equal("no authority to update group");
 				done()
 			})
 	})
@@ -668,12 +678,12 @@ describe('Delete /v1/group', () => {
 	let groupData: any
 
 	beforeEach((done) => {
-
 		let deleteGroup: AV.Object = new Group()
 		groupData = {
 			name: "testDeleteGroup" + new Date().getTime(),
 			groupInfo: "testGroup"
-		}
+		};
+		console.log('groupData',groupData.name);
 		deleteGroup.set('name', groupData.name)
 		deleteGroup.set('groupInfo', groupData.groupInfo)
 		deleteGroup.save(null, {sessionToken: sessionToken}).then((objects) => {
@@ -702,8 +712,10 @@ describe('Delete /v1/group', () => {
 	it("use name as specify & should return 204", (done) => {
 		let groupDelete = new AppDELETE(devurl, groupPath, port)
 		groupDelete.setSessionToken(sessionToken)
+		console.log('groupData',groupData.name);
 		groupDelete.DELETE({"name": [groupData.name]},
 			(data: any, statusCode: number) => {
+				console.log('data,statusCode',data,statusCode);
 				statusCode.should.equal(204)
 				done()
 			})
@@ -747,6 +759,7 @@ describe('Delete /v1/group', () => {
 		groupDelete.setSessionToken("wrong token")
 		groupDelete.DELETE({"name": [groupData.name]},
 			(data: any, statusCode: number) => {
+				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal('Invalid SessionToken')
 				done()
@@ -757,10 +770,10 @@ describe('Delete /v1/group', () => {
 		let sessionToken = require('../config').sessionToken.test_group
 		let groupDelete = new AppDELETE(devurl, groupPath, port)
 		groupDelete.setSessionToken(sessionToken)
-		groupDelete.DELETE({"name": ["test_group"]},
+		groupDelete.DELETE({"name": [groupData.name]},
 			(data: any, statusCode: number) => {
-				statusCode.should.equal(401)
-				data.should.equal('no authority to delete group')
+				statusCode.should.equal(404)
+				data.should.equal('error,some group not find')
 				done()
 			})
 	})
@@ -771,8 +784,9 @@ describe('Delete /v1/group', () => {
 		groupDelete.setSessionToken(sessionToken)
 		groupDelete.DELETE({"name": ["test_group"]},
 			(data: any, statusCode: number) => {
-				statusCode.should.equal(404)
-				data.should.equal('error,some group not find')
+				console.log('data statusCode',data,statusCode);
+				statusCode.should.equal(401)
+				data.should.equal('no authority to delete group')
 				done()
 			})
 	})
