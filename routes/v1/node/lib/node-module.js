@@ -214,7 +214,8 @@ var OperateModule = function(req){
                 if(!current.nodeId){
                     reject(new AV.Error(403,'Invalid nodeId'))
                 }
-                if(Object.keys(current).length == 1){
+                if(typeof current.nodeInfo == 'undefined' && typeof current.AppKey == 'undefined' &&
+                    typeof current.protocol == 'undefined'){
                     reject(new AV.Error(403 ,'At least one updateInfo not include nodeId'));
                 }
                 var nodeInfoQuery = new AV.Query('NodeInfo');
