@@ -15,7 +15,6 @@ var group_module = require('./lib/group-module');
 router.options('/', cors(corsOptions));
 
 router.get('/', cors(corsOptions), function(req, res, next) {
-    console.log("req query", req.query)
     var GM = new group_module(req);
     AV.User.become(GM.sessionToken).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');

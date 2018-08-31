@@ -19,10 +19,11 @@ router.get('/', cors(corsOptions), function(req, res, next) {
     AV.User.become(GM.sessionToken).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function(){
+        GM.paramsCheck();
         GM.typeCheck();
         return GM.getGroupByname()
-    }).then(function (groups) {
-        return GM.getMidGroupUser(groups)
+    }).then(function (group) {
+        return GM.getMidGroupUser(group)
     }).then(function(users){
         res.status(200);
         res.send(users);

@@ -72,9 +72,11 @@ function groupInterface(req) {
     this.paramsCheck = function(){
         switch (req.method){
             case 'GET':
-                if(!req.query.name){
-                        throw new AV.Error(403,"error, miss group name")
-                };
+                if(this.originalUrl == "/v1/group/user" || this.originalUrl == "/v1/group/nodeId"){
+                    if(!req.query.name){
+                            throw new AV.Error(403,"error, miss group name")
+                    };
+                }
                 break;
             case 'POST':
                 req.body.forEach(function(val){
