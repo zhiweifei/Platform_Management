@@ -11,6 +11,7 @@ function groupInterface(req) {
 
     var that = this;
     this.sessionToken = req.headers["sessiontoken"];
+    this.originalUrl = req.originalUrl.split("?")[0];
 
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',this.sessionToken);
 
@@ -23,6 +24,9 @@ function groupInterface(req) {
                 order:{type:"[object String]",default:"dsc"},
                 name:{type:"[object Array]",default:[]}
             };
+            if(this.originalUrl == "/v1/group/user" || this.originalUrl == "/v1/group/nodeId"){
+                paramArray.name = {type:"[object String]",default:''}
+            }
             for (var i in paramArray) {
                 paramArray[i].value = req.query[i] == undefined ? paramArray[i]["default"] : req.query[i];
             }
@@ -67,6 +71,13 @@ function groupInterface(req) {
 
     this.paramsCheck = function(){
         switch (req.method){
+            case 'GET':
+                if(this.originalUrl == "/v1/group/user" || this.originalUrl == "/v1/group/nodeId"){
+                    if(!req.query.name){
+                            throw new AV.Error(403,"error, miss group name")
+                    };
+                }
+                break;
             case 'POST':
                 req.body.forEach(function(val){
                     if(!val.name){
@@ -133,6 +144,61 @@ function groupInterface(req) {
 
         return queryGroup.find({'sessionToken': this.sessionToken})
     };
+
+    this.getGroupByname = function(){
+        var queryArrName = this.paramArray.name.value;
+        var queryGroup = new AV.Query('Group');
+        if(queryArrName.length >0){
+            queryGroup.equalTo('name',queryArrName);
+        }
+        return queryGroup.first({'sessionToken': this.sessionToken})
+    }
+
+    this.getMidGroupUser = function(group){
+        var skip = this.paramArray.skip.value;
+        var limit = this.paramArray.limit.value;
+        console.log("this.paramArray",this.paramArray)
+
+        return new Promise(function(resolve, reject){
+                var queryGroupUser = new AV.Query('GroupUserMap');
+                queryGroupUser.equalTo("Group", group);
+                queryGroupUser.include("User");
+                queryGroupUser.limit(limit);
+                queryGroupUser.skip(skip);
+                queryGroupUser.find({'sessionToken': that.sessionToken}).then(function(midGroupUser){
+                    var midUsers = []
+                    midGroupUser.forEach(function(val){
+                        midUsers.push(val.get('User').toJSON())
+                    })
+                    resolve()
+                }).catch(function(err){
+                    reject(err)
+                })
+
+        })
+    }
+
+    this.getNode = function(group){
+        var skip = this.paramArray.skip.value;
+        var limit = this.paramArray.limit.value;
+
+        return new Promise(function(resolve, reject){
+                var queryGroupNode = new AV.Query('NodeInfo');
+                queryGroupNode.equalTo("Group", group);
+                queryGroupNode.limit(limit);
+                queryGroupNode.skip(skip);
+                queryGroupNode.find({'sessionToken': that.sessionToken}).then(function(nodes){
+                    var resNodes = [];
+                    nodes.forEach(function(val){
+                        resNodes.push(val.toJSON())
+                    })
+                    resolve(resNodes)
+                }).catch(function(err){
+                    reject(err)
+                })
+        })
+
+    }
 
     this.getGroupCount = function () {
         var queryGroup = new AV.Query('Group');
