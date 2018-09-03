@@ -81,7 +81,7 @@ describe('POST /v1/login', () => {
 			});
 	});
 
-	it.skip('login fail too much should return 登录失败次数超过限制，请稍候再试，或者通过忘记密码重设密码。', (done) => {
+	it('login fail too much should return 登录失败次数超过限制，请稍候再试，或者通过忘记密码重设密码。', (done) => {
 
 		function ErrorLogin() {
 			appLogin.login(postWrongPassword, function(data: any, statusCode: number){
