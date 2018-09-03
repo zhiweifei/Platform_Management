@@ -168,9 +168,7 @@ function groupInterface(req) {
                 queryGroupUser.find({'sessionToken': that.sessionToken}).then(function(midGroupUser){
                     var midUsers = []
                     midGroupUser.forEach(function(val){
-                        if(val.get('User')){
-                            midUsers.push(val.get('User').toJSON())
-                        }
+                        midUsers.push(val.get('User').toJSON())
                     })
                     resolve(midUsers)
                 }).catch(function(err){
