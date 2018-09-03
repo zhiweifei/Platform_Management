@@ -59,7 +59,7 @@ describe('Get /v1/group/user', () => {
 		})
 	})
 
-	it.skip("use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
+	it("use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
 		console.log("Get 40 data at first")
 		let groupQuery: GroupQueryParameter = {
 			name: 'test_group',
@@ -191,7 +191,7 @@ describe('Get /v1/group/user', () => {
 		})
 	})
 
-	it("group admin that username is test_group & should return group:test_group ", (done) => {
+	it("group admin that username is test_group & should return group relate user info ", (done) => {
 		let groupQuery: GroupQueryParameter = {
 			name: 'test_group'
 		}

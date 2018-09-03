@@ -14,7 +14,6 @@ const port = 80;
 describe('Put /v1/user/verify', () => {
 	let sessionToken = require('../config').sessionToken.test
 	let userData: any = {
-		email: "testtest@qq.com",
 		phone : 13423455555
 	}
     beforeEach((done) => {
