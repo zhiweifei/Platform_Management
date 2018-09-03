@@ -73,6 +73,7 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
                     return request.object.save(null,{'useMasterKey':true}).then(function()  {
                         // filed2_Object.set('ACL',setAcl);
                         return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
+                            return
                             console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave set ACL ok");
                         })
                     });
@@ -88,9 +89,29 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
     this.afterSave = function () {
 
         AV.Cloud.afterSave(this.tableName, function(request) {
-            middleTable_setAcl(request);
+            middleTable_setAcl(request).then(function(){
+                that.field_setAcl(request);
+            });
         });
     };
+
+    this.field_setAcl = function(request){
+        var filed2_Object = request.object.get(that.filed2);
+        return request.object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (midresult) {
+            var midAcl = midresult.getACL();
+            filed2_Object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
+                var acl = result.getACL();
+                var setAcl = mergeAcl(midAcl['permissionsById'], acl['permissionsById'])
+                filed2_Object.set('ACL',setAcl);
+                return filed2_Object.save(null,{'useMasterKey':true}).then(function()  {
+                    console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave" + that.filed2 + "set ACL ok");
+                }).catch(function(err){
+                    console.error("AccessLink-Platform cloud# afterSave err", err)
+                });
+
+            })
+        })
+    }
 
     this.beforeSave = function () {
 
