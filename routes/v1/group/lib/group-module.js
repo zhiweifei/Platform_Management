@@ -205,6 +205,34 @@ function groupInterface(req) {
         return queryGroup.count({'sessionToken': this.sessionToken})
     };
 
+
+    var mergeAcl = function(jsonObject1, jsonObject2) {
+        var resultJsonObject = {};
+        for (var attr in jsonObject1) {
+            resultJsonObject[attr] = jsonObject1[attr];
+        }
+        for (var attr in jsonObject2) {
+            resultJsonObject[attr] = jsonObject2[attr];
+        }
+        return resultJsonObject;
+    }
+
+    var setGroupRoleToUserACL = function(newGroup, user){
+        console.log("eric newGroup, user", newGroup, user)
+        var groupid = newGroup.toJSON().objectId;
+        user.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
+            var userAcl = result.getACL();
+            var roleAcl = new AV.ACL();
+            roleAcl.setRoleReadAccess('group_admin_' + groupid, true);
+            var setAcl = mergeAcl(roleAcl['permissionsById'], userAcl['permissionsById']);
+            user.set('ACL',setAcl)
+            user.save(null,{'useMasterKey':true}).then(function()  {
+                console.log("AccessLink-Platform /group# relate_GroupToUser set User ACL ok")
+            })
+        })
+
+    }
+
     var relate_GroupToUser = function (User,newGroup) {
         var addObject = [];
         return new Promise(function (resolve, reject) {
@@ -215,6 +243,7 @@ function groupInterface(req) {
                     if (objectUsers.length > 0 && objectUsers.length == User.length) {
                         objectUsers.forEach(function (current_user) {
                             addObject.push(GroupUserMap_middleTable.buildOneData(newGroup, current_user));
+                            setGroupRoleToUserACL(newGroup, current_user);
                         });
                         resolve(addObject);
                     }
