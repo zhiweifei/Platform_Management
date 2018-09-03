@@ -637,7 +637,7 @@ describe('Put /v1/group', () => {
 			})
 	})
 
-	it("group admin update groupInfo & should return 401 status code", (done) => {
+	it("group admin update groupInfo & should return 201 status code", (done) => {
 		let sessionToken = require('../config').sessionToken.test_group
 		let updateGroup: Array<GroupPutParameter> = [{
 				name: "test_group",
@@ -648,8 +648,8 @@ describe('Put /v1/group', () => {
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
 				console.log('data statusCode',data,statusCode);
-				statusCode.should.equal(404)
-				data.should.equal("error,some group is not find");
+				statusCode.should.equal(201)
+				data.should.equal("success, update group successfully");
 				done()
 			})
 	})

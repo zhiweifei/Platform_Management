@@ -2,7 +2,7 @@ import fs = require('fs')
 import { expect } from 'chai'
 import 'chai/register-should'
 import 'mocha'
-import { AppLogin, AppPOST} from "../../lib/http-tools"
+import { AppLogin, AppPOST,AppPUT} from "../../lib/http-tools"
 import querystring = require('querystring');
 import * as AV from 'leancloud-storage';
 import { UserVerifyParameter} from "./lib/parameter"
@@ -14,10 +14,25 @@ const port = 80;
 describe('Put /v1/user/verify', () => {
 	let sessionToken = require('../config').sessionToken.test
 	let userData: any = {
-		email: "testcase@qq.com",
+		email: "testtest@qq.com",
 		phone : 13423455555
 	}
-
+    beforeEach((done) => {
+	    userData.email = new Date().getTime() + "@qq.com";
+        let newUser = {
+            username: "test",
+            email: userData.email
+        };
+        let userPut = new AppPUT(devurl, "/v1/user", port)
+        userPut.setSessionToken(sessionToken)
+        userPut.PUT(newUser,
+            (data: any, statusCode: number) => {
+                console.log('data statusCode',data,statusCode);
+                statusCode.should.equal(201)
+                data.should.equal("success, update user Info successfully")
+                done()
+            })
+    })
 	it("verify email & should return 201", (done) => {
 		let params: UserVerifyParameter = {
 			email: userData.email
@@ -50,7 +65,7 @@ describe('Put /v1/user/verify', () => {
 
 	it("Invalid email & should return 403", (done) => {
 		let params: UserVerifyParameter = {
-			email: "InvalidEmail"
+			email: new Date().getTime().toString()
 		}
 		let userVerifyPost = new AppPOST(devurl, userPath, port)
 		userVerifyPost.setSessionToken(sessionToken)
