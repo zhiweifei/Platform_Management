@@ -255,7 +255,6 @@ function groupInterface(req) {
                 relation.add(allUser);
                 resolve([administratorRole]);
             }).catch(function (error) {
-                console.log("eric258 error", error)
                 if(error.hasOwnProperty('message')){
                     reject(new AV.Error(403, 'Invalid user'))
                 }
@@ -297,7 +296,6 @@ function groupInterface(req) {
                         return relateGroupRoleToUser(arr[0],group_user,admin,group_admin)
                     }
                 }).catch(function(error){
-                    console.log("eric error", error)
                     return dealBuildGroupErr(error)
                 }).then(function (result) {
                     callback(null,result)

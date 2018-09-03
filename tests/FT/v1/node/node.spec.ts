@@ -546,7 +546,7 @@ describe('Put /v1/node', function() {
 			nodeId: parameterData.nodeId,
 			AppKey: "12345678123456781234567812345678",
 			nodeInfo: "info",
-			protocol: "tcpip"
+			protocol: "tcp"
 		}]
 		let http = new httpRequest(devurl, port, path)
 		http.setHeaders({sessionToken: config.sessionToken.test_super})
@@ -687,7 +687,7 @@ describe('Delete /v1/node', function() {
 		}
 		let http = new httpRequest(devurl, port, path)
 		http.setHeaders({sessionToken: config.sessionToken.test_super})
-		http.DELETE(parameter,function(data, statusCode){
+		http.DELETE(parameter,function(data, statusCode){	
 			data.should.equal("no authority to delete nodeInfo")
 			statusCode.should.equal(403)
 			done()
