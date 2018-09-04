@@ -88,7 +88,7 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
     this.afterSave = function () {
 
         AV.Cloud.afterSave(this.tableName, function(request) {
-            middleTable_setAcl(request)
+            middleTable_setAcl(request);
         });
     };
 
