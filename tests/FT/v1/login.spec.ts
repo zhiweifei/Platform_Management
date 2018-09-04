@@ -21,7 +21,11 @@ let postErrorUsername = {
 	'username' : "testwrong",
 	'password': "test"
 };
-let postWrongPassword = {
+let postWrongPassword_test_data_1 = {
+	'username' : "test_data_1",
+	'password': "wrong"
+};
+let postWrongPassword_test = {
 	'username' : "test",
 	'password': "wrong"
 };
@@ -72,7 +76,7 @@ describe('POST /v1/login', () => {
 	});
 
 	it('Give wrong password, should return The username and password mismatch.', (done) => {
-		appLogin.login(postWrongPassword,
+		appLogin.login(postWrongPassword_test,
 			(data: any, statusCode: number) => {
 				console.log('login# data,statusCode',data,statusCode);
 				data.should.equal('The username and password mismatch. ');
@@ -84,9 +88,9 @@ describe('POST /v1/login', () => {
 	it('login fail too much should return 登录失败次数超过限制，请稍候再试，或者通过忘记密码重设密码。', (done) => {
 
 		function ErrorLogin() {
-			appLogin.login(postWrongPassword, function(data: any, statusCode: number){
+			appLogin.login(postWrongPassword_test_data_1, function(data: any, statusCode: number){
 				console.log('login# data,statusCode',data,statusCode)
-				if(data== '登录失败次数超过限制，请稍候再试，或者通过忘记密码重设密码。'){
+				if(statusCode == 219){
 					done()
 				}else{
 					ErrorLogin()
