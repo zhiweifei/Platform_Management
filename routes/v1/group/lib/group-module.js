@@ -184,7 +184,8 @@ function groupInterface(req) {
 
         return new Promise(function(resolve, reject){
                 var queryGroupNode = new AV.Query('NodeInfo');
-                queryGroupNode.equalTo("Group", group);
+                // if group is undefined set it ''
+                queryGroupNode.equalTo("Group", group == undefined ?'':group);
                 queryGroupNode.limit(limit);
                 queryGroupNode.skip(skip);
                 queryGroupNode.find({'sessionToken': that.sessionToken}).then(function(nodes){
@@ -252,7 +253,7 @@ function groupInterface(req) {
                     allUser = objectUsers;
                     var roleQuery = new AV.Query(AV.Role);
                     roleQuery.equalTo('name', admin + ObjectId);
-                    return roleQuery.find({'sessionToken': that.sessionToken})
+                    return roleQuery.find({'useMasterKey': true})
                 }
                 else{
                     throw new AV.Error(403, 'Invalid user')
@@ -297,11 +298,7 @@ function groupInterface(req) {
                     }else{
                         group_user = [that.login_username]
                     }
-                    if(current.user == undefined){
-                        return
-                    }else{
-                        return relateGroupRoleToUser(arr[0],group_user,admin,group_admin)
-                    }
+                    return relateGroupRoleToUser(arr[0],group_user,admin,group_admin)
                 }).catch(function(error){
                     return dealBuildGroupErr(error)
                 }).then(function (result) {
@@ -360,7 +357,7 @@ function groupInterface(req) {
                 if(current.length>0)
                     addObject = addObject.concat(current)
             });
-            return AV.Object.saveAll(addObject,{'sessionToken': that.sessionToken}).then(function () {
+            return AV.Object.saveAll(addObject,{'useMasterKey': true}).then(function () {
                 return "success, relate to users successfully";
             }).catch(function(error){
                 throw error
