@@ -57,7 +57,7 @@ describe('Get /v1/group/user', () => {
 		})
 	})
 
-	it.only("use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
+	it("use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
 		console.log("Get 20 data at first")
 		let groupQuery: GroupQueryParameter = {
 			name: 'test_group',
