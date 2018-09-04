@@ -8,7 +8,7 @@ var middleTable = require('../../lib/middleTable');
 
 var findValidUser =  function (ArrParam,table,field) {
     var Query = new AV.Query(table);
-    Query.containedIn(field, ArrParam);
+    Query.containedIn(field, typeof ArrParam=='undefined'? []:ArrParam);
     return Query.find({"useMasterKey": true}).then(function (result) {
         return result
     });
@@ -366,6 +366,13 @@ function groupInterface(req) {
                     if(!val.user && !val.groupInfo){
                         throw new AV.Error(403,"error, params include user or groupInfo at least one")
                     }
+                    
+                    if(val.user){
+                        if(Object.prototype.toString.call(val.user)!="[object Array]"){
+                            throw new AV.Error(403,"Invalid user")
+                        }   
+                    }
+
                 });
                 break;
             case 'PUT':
