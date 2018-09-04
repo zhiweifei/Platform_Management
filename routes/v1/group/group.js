@@ -43,8 +43,8 @@ router.post('/', cors(corsOptions), function(req, res, next) {
     }).catch(function () {
         throw new AV.Error(401,'Invalid SessionToken');
     }).then(function() {
-        GM.paramsCheck();
         GM.typeCheck();
+        GM.paramsCheck();
         return GM.buildAllGroup();
     }).then(function () {
         res.status(201);

@@ -11,7 +11,8 @@ const path = "/v1/node"
 const port = 80
 
 const config = require("../config.json")
-const appID = config.AppId
+const appIDPath = "/../../../../.leancloud/current_app_id"
+const appID = fs.readFileSync(__dirname + appIDPath, 'utf8')
 const appkey = config.AppKey
 const masterKey = config.MasterKey
 
@@ -35,7 +36,7 @@ describe('Get /v1/node', function() {
 		let http = new httpRequest(devurl, port, path)
 		http.setHeaders({sessionToken: config.sessionToken.test_super})
 		http.GET('',function(data, statusCode){	
-			data.length.should.equal(1000)
+			data.length.should.within(0,1000)
 			statusCode.should.equal(200)
 			done()
 		})
@@ -151,7 +152,7 @@ describe('Get /v1/node', function() {
 		let http = new httpRequest(devurl, port, path)
 		http.setHeaders({sessionToken: config.sessionToken.test_super})
 		http.GET(parameter,function(data, statusCode){	
-			data.should.equal("query id is not in 'nodeIds'!")
+			data.should.equal("query nodeId does not exist")
 			statusCode.should.equal(404)
 			done()
 		})
@@ -214,12 +215,12 @@ describe('Get /v1/node', function() {
 		})
 	})
 
-	it("normal admin use nodeId ['b827eb563a2a'] that not own should return statusCode 404", (done) => {
+	it("normal admin that is test_guest use nodeId ['b827eb563a2a'] that not own should return statusCode 404", (done) => {
 		let parameter = {
 			nodeId: ['b827eb563a2a']
 		}
 		let http = new httpRequest(devurl, port, path)
-		http.setHeaders({sessionToken: config.sessionToken.test})
+		http.setHeaders({sessionToken: config.sessionToken.test_guest})
 		http.GET(parameter,function(data, statusCode){
 			data.should.equal("query nodeId does not exist")
 			statusCode.should.equal(404)

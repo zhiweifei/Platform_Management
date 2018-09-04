@@ -16,7 +16,7 @@ describe('Get /v1/node/tcpip', () => {
 		let http = new httpRequest(devurl, port, path)
 		http.setHeaders({sessionToken: config.sessionToken.test_super})
 		http.GET('', function(data, statusCode){
-			data.length.should.equal(1000)
+			data.length.should.within(0, 1000)
 			statusCode.should.equal(200)
 			done()
 		})

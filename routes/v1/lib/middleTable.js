@@ -72,9 +72,9 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
                     request.object.set('ACL',setAcl);
                     return request.object.save(null,{'useMasterKey':true}).then(function()  {
                         // filed2_Object.set('ACL',setAcl);
-                        return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
+                        // return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
                             console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave set ACL ok");
-                        })
+                        // })
                     });
                 });
             }).catch(function (error) {
