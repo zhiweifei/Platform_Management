@@ -280,6 +280,20 @@ describe('Get /v1/user', () => {
 		})
 	})
 
+	it("group admin that username is test_group & should return users in this group", (done) => {
+		let sessionToken = require('../config').sessionToken.test_group
+		let nodeInfoGet = new AppGET(devurl, userPath, port)
+		nodeInfoGet.setSessionToken(sessionToken)
+		nodeInfoGet.GET("", (data: any, statusCode: number) => {
+			statusCode.should.equal(200)
+			data.forEach((value, i) => {
+				if(value.username == 'test_group')
+					done();
+			})
+
+		})
+	})
+
 	it("group admin query group member & should return member infomation", (done) => {
 		let getParameter: UserGetParameter = {
 			username: ["test"]
