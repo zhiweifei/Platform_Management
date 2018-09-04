@@ -185,7 +185,7 @@ function groupInterface(req) {
         return new Promise(function(resolve, reject){
                 var queryGroupNode = new AV.Query('NodeInfo');
                 // if group is undefined set it ''
-                queryGroupNode.equalTo("Group", group == undefined ?'':group);
+                queryGroupNode.equalTo("Group", typeof group == 'undefined'?'':group);
                 queryGroupNode.limit(limit);
                 queryGroupNode.skip(skip);
                 queryGroupNode.find({'sessionToken': that.sessionToken}).then(function(nodes){
