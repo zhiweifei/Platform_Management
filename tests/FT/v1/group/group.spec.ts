@@ -293,7 +293,7 @@ describe('Get /v1/group', () => {
 })
 
 describe('Post /v1/group', () => {
-	let sessionToken = require('../config').sessionToken.test_super
+	let sessionToken = require('../config').sessionToken.test_group
 	let groupData: any
 	let newGroup: Array<GroupBodyParameter>
 
@@ -336,7 +336,6 @@ describe('Post /v1/group', () => {
 		groupPost.setSessionToken(sessionToken)
 		groupPost.POST(newGroup,
 			(data: any, statusCode: number) => {
-				console.log('data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, build group successfully")
 				done()
@@ -398,49 +397,65 @@ describe('Post /v1/group', () => {
 			})
 	})
 
-	it("use feature wrong parameter & should return status code as 403", (done) => {
-		let checkArray: Array<string> = []
-
-		function paramCheck(getParameter: any, paramError: string, param){
-			let groupPost = new AppPOST(devurl, groupPath, port)
-			groupPost.setSessionToken(sessionToken)
-			groupPost.POST(getParameter, (data: any, statusCode: number) => {
-				statusCode.should.equal(403)
-				data.should.equal(paramError)
-				checkArray.push(param)
-				if(checkArray.indexOf("name") >= 0 && checkArray.indexOf("user") >= 0 &&
-					checkArray.indexOf("groupInfo") >= 0 && checkArray.indexOf("user") >= 0){
-					done()
-				}
-			})
-		}
-
-		console.log("check name")
+	it("use feature wrong name parameter & should return status code as 403", (done) => {
 		let wrong_name: Array<GroupBodyParameter> = [{
 			name: ["name"],
 			user: ["test"]
 		}]
-		paramCheck(wrong_name, 'Invalid group name', "name")
+		let groupPost = new AppPOST(devurl, groupPath, port)
+		groupPost.setSessionToken(sessionToken)
+		groupPost.POST(wrong_name, (data: any, statusCode: number) => {
+			console.log('data statusCode',data,statusCode);
+			statusCode.should.equal(403)
+			data.should.equal('Invalid group name')
+			done()
+		})
+	})
 
-		console.log("check user")
+	it("use feature wrong user parameter & should return status code as 403", (done) => {
 		let wrong_user: Array<GroupBodyParameter> = [{
 			name: "test",
 			user: "test"
 		}]
-		paramCheck(wrong_user, 'Invalid user', "user")
+		let groupPost = new AppPOST(devurl, groupPath, port)
+		groupPost.setSessionToken(sessionToken)
+		groupPost.POST(wrong_user, (data: any, statusCode: number) => {
+			console.log('data statusCode',data,statusCode);
+			statusCode.should.equal(403)
+			data.should.equal('Invalid user')
+			done()
+		})
+	})
 
-		console.log("check groupInfo")
+	it("use feature wrong groupInfo parameter & should return status code as 403", (done) => {
 		let wrong_groupInfo: Array<GroupBodyParameter> = [{
 			name: "test",
 			groupInfo: ["Info"]
 		}]
-		paramCheck(wrong_groupInfo, 'Invalid groupInfo', "groupInfo")
+		let groupPost = new AppPOST(devurl, groupPath, port)
+		groupPost.setSessionToken(sessionToken)
+		groupPost.POST(wrong_groupInfo, (data: any, statusCode: number) => {
+			console.log('data statusCode',data,statusCode);
+			statusCode.should.equal(403)
+			data.should.equal('Invalid groupInfo')
+			done()
+		})
+	})
 
+	it("use feature wrong body parameter & should return status code as 403", (done) => {
 		let wrong_BodyInfo = {
 			name: "test",
 			groupInfo: ["Info"]
 		}
-		paramCheck(wrong_BodyInfo, 'error, invalid param in body', "body")
+		let groupPost = new AppPOST(devurl, groupPath, port)
+		groupPost.setSessionToken(sessionToken)
+		groupPost.POST(wrong_BodyInfo, (data: any, statusCode: number) => {
+			console.log('data statusCode',data,statusCode);
+			statusCode.should.equal(403)
+			data.should.equal('error, invalid param in body')
+			done()
+		})
+
 	})
 
 	it("create group with wrong sessionToken & should return 403 status code", (done) => {
