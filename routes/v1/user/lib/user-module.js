@@ -1,6 +1,5 @@
 var AV = require('leancloud-storage');
 var async = require('async');
-var transformToObject = require('../../lib/transformToObject');
 var ArrayFindDifference = require('../../lib/ArrayFindDifference');
 var setDataAcl = require('../../lib/setAcl');
 var middleTable = require('../../lib/middleTable');
