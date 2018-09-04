@@ -212,12 +212,11 @@ describe('Get /v1/group/nodeId', () => {
 		let groupQuery: GroupQueryParameter = {
 			name: 'test_group'
 		}
-		let sessionToken = require('../../config').sessionToken.test
+		let sessionToken = require('../../config').sessionToken.test_guest
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery,(data: any, statusCode: number) => {
-			console.log('data',data);
-			data.length.should.equal(1)
+			data.length.should.equal(0)
 			statusCode.should.equal(200)
 			done();
 		})
