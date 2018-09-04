@@ -6,11 +6,7 @@ var async = require('async');
 var ArrayFindDifference = require('../../lib/ArrayFindDifference');
 var middleTable = require('../../lib/middleTable');
 
-var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',this.sessionToken);
-
-var sessionToken;
-
-var findValidUser =  function (ArrParam,table,field,sessionToken) {
+var findValidUser =  function (ArrParam,table,field) {
     var Query = new AV.Query(table);
     Query.containedIn(field, ArrParam);
     return Query.find({"useMasterKey": true}).then(function (result) {
@@ -34,7 +30,8 @@ var setGroupRoleToUserACL = function(newGroup, user){
     })
 }
 
-var relate_GroupToUser = function (User,newGroup) {
+var relate_GroupToUser = function (User,newGroup,sessionToken) {
+    var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
     return findValidUser(User, '_User', 'username', sessionToken).then(function (objectUsers) {
         //make sure all Users are right and findValidUser successfully
         if (objectUsers.length > 0 && objectUsers.length == User.length) {
@@ -57,7 +54,7 @@ var relate_GroupToUser = function (User,newGroup) {
     })
 };
 
-var relate_UserToRole = function (User,ObjectId,admin) {
+var relate_UserToRole = function (User,ObjectId,admin,sessionToken) {
     var allUser;
     return new Promise(function (resolve, reject) {
         findValidUser(User, '_User', 'username', sessionToken).then(function (objectUsers) {
@@ -86,7 +83,7 @@ var relate_UserToRole = function (User,ObjectId,admin) {
     })
 };
 
-var buildUpOneGroup = function (currentBuild) {
+var buildUpOneGroup = function (currentBuild,sessionToken) {
 
     return new Promise(function (resolve,reject) {
         var groupInfo = currentBuild.groupInfo;
@@ -115,15 +112,15 @@ var buildUpOneGroup = function (currentBuild) {
 
 };
 
-var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admin){
+var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admin,sessionToken){
     var buildObject = [];
     if(Array.isArray(admin)){
-        buildObject.push(relate_GroupToUser(group_user, NewGroupObject));
-        buildObject.push(relate_UserToRole(admin, NewGroupObject.id, "admin_"));
-        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"))
+        buildObject.push(relate_GroupToUser(group_user, NewGroupObject, sessionToken));
+        buildObject.push(relate_UserToRole(admin, NewGroupObject.id, "admin_", sessionToken));
+        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_", sessionToken))
     }else{
-        buildObject.push(relate_GroupToUser(group_user, NewGroupObject));
-        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"))  
+        buildObject.push(relate_GroupToUser(group_user, NewGroupObject, sessionToken));
+        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_", sessionToken))  
     }
     return Promise.all(buildObject).then(function (result) {
         var addObject = [];
@@ -171,7 +168,8 @@ var dealBuildGroupErr= function(error){
         }
 }
 
-var find_delete_GroupUser = function (User,currentGroup) {
+var find_delete_GroupUser = function (User,currentGroup,sessionToken) {
+    var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
 
     return new Promise(function (resolve,reject) {
         if(User.length > 0) {
@@ -206,7 +204,7 @@ var find_delete_GroupUser = function (User,currentGroup) {
 
 };
 
-var dealEachGroup = function (current) {
+var dealEachGroup = function (current,sessionToken) {
 
     return new Promise(function (resolve,reject) {
         var currentGroupObject;
@@ -258,7 +256,8 @@ var dealEachGroup = function (current) {
     })
 };
 
-var dealNewUserArr = function (currentGroupObject,newUserArr) {
+var dealNewUserArr = function (currentGroupObject,newUserArr,sessionToken) {
+    var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
 
     return new Promise(function (resolve,reject) {
         GroupUserMap_middleTable.findData(currentGroupObject).then(function (AllGroupUser) {
@@ -275,8 +274,8 @@ var dealNewUserArr = function (currentGroupObject,newUserArr) {
                 var UserDifference = ArrayFindDifference(oldUserArr, newUserArr);
                 console.log("AccessLink-Platform /group/put# UserDifference", UserDifference);
                 Promise.all([
-                    find_delete_GroupUser(UserDifference.deleteArr, currentGroupObject),
-                    relate_GroupToUser(UserDifference.addArr, currentGroupObject)
+                    find_delete_GroupUser(UserDifference.deleteArr, currentGroupObject, sessionToken),
+                    relate_GroupToUser(UserDifference.addArr, currentGroupObject, sessionToken)
                 ]).then(function (result) {
                     resolve(result)
                 },function (error) {
@@ -294,7 +293,6 @@ function groupInterface(req) {
 
     var that = this;
     this.sessionToken = req.headers["sessiontoken"];
-    sessionToken = this.sessionToken;
     this.originalUrl = req.originalUrl.split("?")[0];
 
     switch (req.method){
@@ -502,7 +500,7 @@ function groupInterface(req) {
                         throw(new AV.Error(403, 'Invalid user'))
                     }
                 }).then(function(){
-                    return buildUpOneGroup(current)
+                    return buildUpOneGroup(current, that.sessionToken)
                 }).then(function(arr){
                     var admin = arr[1];
                     var group_admin = [that.login_username];
@@ -512,7 +510,7 @@ function groupInterface(req) {
                     }else{
                         group_user = [that.login_username]
                     }
-                    return relateGroupRoleToUser(arr[0],group_user,admin,group_admin)
+                    return relateGroupRoleToUser(arr[0],group_user,admin,group_admin, that.sessionToken)
                 }).catch(function(error){
                     return dealBuildGroupErr(error)
                 }).then(function (result) {
@@ -538,7 +536,7 @@ function groupInterface(req) {
             async.map(updateInfo, function (current,callback) {
                 //deal with one group
                 if(typeof current.name != 'undefined'){
-                    dealEachGroup(current,updateInfo).then(function (result) {
+                    dealEachGroup(current,that.sessionToken).then(function (result) {
                         callback(null,result);
                     },function (error) {
                         reject(error)
