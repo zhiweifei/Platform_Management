@@ -223,7 +223,6 @@ function groupInterface(req) {
 
     var relate_GroupToUser = function (User,newGroup) {
         return transformToObject(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
-            console.log('AccessLink-Platform /group/post#relate_GroupToUser objectUsers', objectUsers);
             //make sure all Users are right and transformToObject successfully
             if (objectUsers.length > 0 && objectUsers.length == User.length) {
                 return new Promise(function(resolve, reject){
@@ -249,7 +248,6 @@ function groupInterface(req) {
         var allUser;
         return new Promise(function (resolve, reject) {
             transformToObject(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
-                console.log('AccessLink-Platform /group/post#relate_UserToRole objectUsers', objectUsers);
                 if(objectUsers.length >0){
                     allUser = objectUsers;
                     var roleQuery = new AV.Query(AV.Role);
@@ -281,7 +279,6 @@ function groupInterface(req) {
             async.map(postInfo,function (current,callback) {
 
                 transformToObject(current.user, '_User', 'username', that.sessionToken).then(function (objectUsers) {
-                    console.log('AccessLink-Platform /group/post#relate_GroupToUser objectUsers', objectUsers);
                     //make sure all Users are right and transformToObject successfully
                     if (current.user == undefined || (objectUsers.length > 0 && objectUsers.length == current.user.length)) {
                     }
@@ -450,7 +447,6 @@ function groupInterface(req) {
             var GroupQuery = new AV.Query('Group');
             GroupQuery.equalTo('name',GroupOldName);
             GroupQuery.find({'sessionToken': that.sessionToken}).then(function (result) {
-                console.log("AccessLink-Platform /group/put#  currentGroupObject",result);
                 if(result.length == 0){
                     reject(new AV.Error(404,'error,some group is not find'));
                 }
@@ -531,7 +527,6 @@ function groupInterface(req) {
                 throw new AV.Error(403,'Invalid updateInfo');
             }
             async.map(updateInfo, function (current,callback) {
-                console.log("AccessLink-Platform /group/put# current group",current);
                 //deal with one group
                 if(typeof current.name != 'undefined'){
                     dealEachGroup(current,updateInfo).then(function (result) {
@@ -552,8 +547,6 @@ function groupInterface(req) {
                     if(current[1].length>0)
                         addObject = addObject.concat(current[1]);
                 });
-                console.log("AccessLink-Platform /group/put# deleteObject",deleteObject);
-                console.log("AccessLink-Platform /group/put# addObject",addObject,addObject.length);
                 AV.Object.destroyAll(deleteObject,{'sessionToken':that.sessionToken}).then(function () {
                     return AV.Object.saveAll(addObject,{'sessionToken':that.sessionToken}).then(function () {
                         resolve('success, update success')
@@ -624,7 +617,6 @@ function groupInterface(req) {
         var deleteObject = [];
         return new Promise(function (resolve,reject) {
             async.map(ArrParam, function (value, callback) {
-                console.log('AccessLink-Platform /group/delete# findAllGroup currentGroup',value);
                 findEachGroup(value).then(function (result) {
                     callback(null,result);
                 },function (error) {
@@ -632,7 +624,6 @@ function groupInterface(req) {
                     reject(error);
                 })
             }, function (error,result) {
-                console.log('AccessLink-Platform /group/delete# findAllGroup result',result);
                 result.forEach(function (current) {
                     deleteObject = deleteObject.concat(current)
                 });
@@ -649,11 +640,9 @@ function groupInterface(req) {
                 throw new AV.Error(403,'Invaild name');
             }
             findAllGroup(bodyName).then(function (deleteInfo) {
-                console.log("AccessLink-Platform /group/delete# deleteInfo",deleteInfo,deleteInfo.length);
                 return AV.Object.destroyAll(deleteInfo,{'sessionToken':that.sessionToken}).then(function () {
                     resolve("success, delete success");
                 },function (error) {
-                    console.log("AccessLink-Platform /group/delete# error", error.message)
                     if(error.hasOwnProperty('message')) {
                         if (error.message.indexOf('Forbidden to delete by class') > -1) {
                             reject(new AV.Error(401, 'no authority to delete group'));
