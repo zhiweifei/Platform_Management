@@ -206,58 +206,43 @@ function groupInterface(req) {
     };
 
     var setGroupRoleToUserACL = function(newGroup, user){
-        return new Promise(function(resolve, reject){
-            var groupid = newGroup.toJSON().objectId;
-            user.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
-                var userAcl = result.getACL();
-                userAcl.setRoleReadAccess('group_admin_' + groupid, true);
-                user.set('ACL',userAcl)
-                return user.save(null,{'useMasterKey':true}).then(function()  {
-                    console.log("AccessLink-Platform /group# relate_GroupToUser set User ACL ok")
-                    resolve()
-                })
-            }).catch(function(error){
-                console.error("AccessLink-Platform /group# relate_GroupToUser set User ACL error", error)
-                reject(error)
+        var groupid = newGroup.toJSON().objectId;
+        return user.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
+            var userAcl = result.getACL();
+            userAcl.setRoleReadAccess('group_admin_' + groupid, true);
+            user.set('ACL',userAcl)
+            return user.save(null,{'useMasterKey':true}).then(function()  {
+                console.log("AccessLink-Platform /group# relate_GroupToUser set User ACL ok")
+                return 
             })
+        }).catch(function(error){
+            console.error("AccessLink-Platform /group# relate_GroupToUser set User ACL error", error)
+            throw error
         })
     }
 
     var relate_GroupToUser = function (User,newGroup) {
-        return new Promise(function (resolve, reject) {
-            if(User.length >0) {
-                transformToObject(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
-                    console.log('AccessLink-Platform /group/post#relate_GroupToUser objectUsers', objectUsers);
-                    //make sure all Users are right and transformToObject successfully
-                    if (objectUsers.length > 0 && objectUsers.length == User.length) {
-                        async.map(objectUsers, function(current_user, callback){
-                            setGroupRoleToUserACL(newGroup, current_user).then(function(){
-                                var midNewData = GroupUserMap_middleTable.buildOneData(newGroup, current_user)
-                                callback(null, midNewData)
-                            }).catch(function(err){
-                                callback(err)
-                            })
-                        },function(err, result){
-                            if(err){
-                                reject(new AV.Error(403, 'Invalid user'))
-                            }else{
-                                resolve(result)
-                            }
+        return transformToObject(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
+            console.log('AccessLink-Platform /group/post#relate_GroupToUser objectUsers', objectUsers);
+            //make sure all Users are right and transformToObject successfully
+            if (objectUsers.length > 0 && objectUsers.length == User.length) {
+                return new Promise(function(resolve, reject){
+                    async.map(objectUsers, function(current_user, callback){
+                        setGroupRoleToUserACL(newGroup, current_user).then(function(){
+                            var midNewData = GroupUserMap_middleTable.buildOneData(newGroup, current_user)
+                            callback(null, midNewData)
+                        },function(err){
+                            throw err
                         })
-                    }
-                    else {
-                        reject(new AV.Error(403, 'Invalid user'))
-                    }
-                }).catch(function (err) {
-                    console.error("AccessLink-Platform /group/post# relate_GroupToUser transformToObject error", err);
-                    reject(new AV.Error(401, 'there is a server error'))
-                });
+                    },function(err, result){
+                        resolve(result)
+                    })
+                })
             }
-            else{
-                resolve([])
+            else {
+                throw(new AV.Error(403, 'Invalid user'))
             }
-        });
-
+        })
     };
 
     var relate_UserToRole = function (User,ObjectId,admin) {
