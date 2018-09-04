@@ -26,7 +26,7 @@ try{
 	})
 }
 catch(e){
-	console.error("Check init error:", e)
+	//console.error("Check init error:", e)
 }
 
 describe('Get /v1/node', function() {
