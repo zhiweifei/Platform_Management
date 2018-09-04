@@ -24,7 +24,6 @@ describe('Get /v1/group/nodeId', () => {
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery, (data: any, statusCode: number) =>{
 			//data.length.should.equal(1000)
-			console.log('data statusCode',data,statusCode);
 			expect(data.length).to.be.at.most(1000)
 			statusCode.should.equal(200)
 			done()
@@ -38,7 +37,6 @@ describe('Get /v1/group/nodeId', () => {
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery, (data: any, statusCode: number) =>{
 			//data.length.should.equal(1000)
-			console.log('data statusCode',data,statusCode);
 			statusCode.should.equal(403)
 			data.should.equal('error, miss group name')
 			done()
@@ -60,7 +58,7 @@ describe('Get /v1/group/nodeId', () => {
 	})
 
 	it("use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
-		console.log("Get 40 data at first")
+		console.log("Get 20 data at first")
 		let groupQuery: GroupQueryParameter = {
 			name : "test_group",
 			limit: 20
@@ -199,7 +197,6 @@ describe('Get /v1/group/nodeId', () => {
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery,(data: any, statusCode: number) => {
-			console.log('data statusCode',data,statusCode);
 			data.forEach(function(val){
 				val.should.have.property("nodeId")
 			})
