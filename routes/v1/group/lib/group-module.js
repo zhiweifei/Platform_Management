@@ -3,7 +3,7 @@
  */
 var AV = require('leancloud-storage');
 var async = require('async');
-var transformToObject = require('../../lib/transformToObject');
+var findValidUser = require('../../lib/findValidUser');
 var ArrayFindDifference = require('../../lib/ArrayFindDifference');
 var middleTable = require('../../lib/middleTable');
 
@@ -205,6 +205,14 @@ function groupInterface(req) {
         var queryGroup = new AV.Query('Group');
         return queryGroup.count({'sessionToken': this.sessionToken})
     };
+    
+    var findValidUser =  function (ArrParam,table,field,sessionToken) {
+        var Query = new AV.Query(table);
+        Query.containedIn(field, ArrParam);
+        return Query.find({"useMasterKey": true}).then(function (result) {
+            return result
+        });
+    };
 
     var setGroupRoleToUserACL = function(newGroup, user){
         var groupid = newGroup.toJSON().objectId;
@@ -223,8 +231,8 @@ function groupInterface(req) {
     }
 
     var relate_GroupToUser = function (User,newGroup) {
-        return transformToObject(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
-            //make sure all Users are right and transformToObject successfully
+        return findValidUser(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
+            //make sure all Users are right and findValidUser successfully
             if (objectUsers.length > 0 && objectUsers.length == User.length) {
                 return new Promise(function(resolve, reject){
                     async.map(objectUsers, function(current_user, callback){
@@ -248,7 +256,7 @@ function groupInterface(req) {
     var relate_UserToRole = function (User,ObjectId,admin) {
         var allUser;
         return new Promise(function (resolve, reject) {
-            transformToObject(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
+            findValidUser(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
                 if(objectUsers.length >0){
                     allUser = objectUsers;
                     var roleQuery = new AV.Query(AV.Role);
@@ -279,8 +287,8 @@ function groupInterface(req) {
             var postInfo = that.paramArray.body.value;
             async.map(postInfo,function (current,callback) {
 
-                transformToObject(current.user, '_User', 'username', that.sessionToken).then(function (objectUsers) {
-                    //make sure all Users are right and transformToObject successfully
+                findValidUser(current.user, '_User', 'username', that.sessionToken).then(function (objectUsers) {
+                    //make sure all Users are right and findValidUser successfully
                     if (current.user == undefined || (objectUsers.length > 0 && objectUsers.length == current.user.length)) {
                     }
                     else {
@@ -401,8 +409,8 @@ function groupInterface(req) {
 
         return new Promise(function (resolve,reject) {
             if(User.length > 0) {
-                //get all users object by transformToObject function
-                transformToObject(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
+                //get all users object by findValidUser function
+                findValidUser(User, '_User', 'username', that.sessionToken).then(function (objectUsers) {
                     async.map(objectUsers, function (currentUser, callback) {
                         // find the object which need to deleted in GroupUserMap table
                         GroupUserMap_middleTable.findData(currentGroup, currentUser).then(function (result) {
