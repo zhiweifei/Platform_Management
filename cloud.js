@@ -44,7 +44,7 @@ AV.Cloud.afterSave('Group', function(request) {
         GroupObject.disableBeforeHook();
         GroupObject.disableAfterHook();
         AV.Object.saveAll([buildGroupRole,buildGroupAdminRole,GroupObject],{'useMasterKey':true}).then(function (result) {
-            console.log("AccessLink-Platform cloud# Group afterSave set new Group Role success",result);
+            console.log("AccessLink-Platform cloud# Group afterSave set new Group Role success");
             //result[0] is group_admin role
             //result[1] is admin role
             result[1].getRoles().add(result[1]);
@@ -58,7 +58,6 @@ AV.Cloud.afterSave('Group', function(request) {
 });
 
 AV.Cloud.beforeDelete('Group',function (request) {
-    console.log("#cloud delete Group request.object",request.object);
     var userQuery = new AV.Query('_Role');
     var GroupRoleName = 'group_admin_' + request.object.id;
     var GroupAdminRoleName = 'admin_' + request.object.id;
@@ -72,7 +71,6 @@ AV.Cloud.beforeDelete('Group',function (request) {
             if(current.length>0)
                 deleteObject = deleteObject.concat(current)
         });
-        console.log('#cloud delete Group deleteObject',deleteObject);
         return AV.Object.destroyAll(deleteObject,{useMasterKey:true}).then(function () {
             console.log('#Group beforeDelete delete data about group success')
         });
@@ -80,7 +78,6 @@ AV.Cloud.beforeDelete('Group',function (request) {
 });
 
 AV.Cloud.beforeSave('NodeInfo',function (request) {
-    console.log("#cloud beforeSave NodeInfo request.object",request.object);
     var roleAcl = new AV.ACL();
     var objectId = request.object.get('Group').id;
     roleAcl.setRoleReadAccess('super_admin', true);
@@ -91,7 +88,6 @@ AV.Cloud.beforeSave('NodeInfo',function (request) {
 });
 
 AV.Cloud.beforeDelete('NodeInfo',function (request) {
-    console.log("#cloud delete NodeInfo request.object",request.object);
     return Promise.all([
         UserNodeInfoMap_middleTable.findData(undefined,request.object)
     ]).then(function (result) {
@@ -100,7 +96,6 @@ AV.Cloud.beforeDelete('NodeInfo',function (request) {
             if(current.length>0)
                 deleteObject = deleteObject.concat(current)
         });
-        console.log('#cloud delete NodeInfo deleteObject',deleteObject);
         return AV.Object.destroyAll(deleteObject,{useMasterKey:true}).then(function () {
             console.log('#NodeInfo beforeDelete delete data about NodeInfo success')
         });
@@ -108,7 +103,6 @@ AV.Cloud.beforeDelete('NodeInfo',function (request) {
 });
 
 AV.Cloud.beforeDelete('_User',function (request) {
-    console.log("#cloud delete User request.object",request.object);
     return Promise.all([
         GroupUserMap_middleTable.findData(undefined,request.object),
         UserNodeInfoMap_middleTable.findData(request.object)
@@ -118,7 +112,6 @@ AV.Cloud.beforeDelete('_User',function (request) {
             if(current.length>0)
                 deleteObject = deleteObject.concat(current)
         });
-        console.log('#cloud delete User deleteObject',deleteObject);
         return AV.Object.destroyAll(deleteObject,{useMasterKey:true}).then(function () {
             console.log('#User beforeDelete delete data about NodeInfo success')
         });
