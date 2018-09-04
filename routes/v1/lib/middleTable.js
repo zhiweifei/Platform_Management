@@ -54,19 +54,15 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
         var filed1_Object = request.object.get(that.filed1);
         var filed2_Object = request.object.get(that.filed2);
         console.log("AccessLink-Platform cloud#cloudSetACL tableName",that.tableName);
-        console.log('AccessLink-Platform cloud#cloudSetAC filed1_Object',filed1_Object);
-        console.log('AccessLink-Platform cloud#cloudSetAC filed2_Object',filed2_Object);
         if(!filed1_Object || !filed2_Object){
             throw new AV.Cloud.Error('AccessLink-Platform cloud#' + this.tableName + 'afterSave lack filed!');
         }
         else{
             return filed1_Object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
                 result.disableBeforeHook();
-                console.log("AccessLink-Platform cloud#filed1_Object afterSave ACL" + that.tableName,result.getACL());
                 var filed1_ACL_Json = result.getACL();
                 return filed2_Object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
                     result.disableBeforeHook();
-                    console.log("AccessLink-Platform cloud#filed2_Object afterSave ACL" + that.tableName,result.getACL());
                     var filed2_ACL_Json = result.getACL();
                     var setAcl = mergeAcl(filed1_ACL_Json['permissionsById'], filed2_ACL_Json['permissionsById'])
                     request.object.set('ACL',setAcl);
