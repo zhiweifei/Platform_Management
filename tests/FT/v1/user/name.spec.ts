@@ -15,11 +15,11 @@ const port = 80;
 describe('Get /v1/user/name', () => {
 	let sessionToken = require('../config').sessionToken.test_super
 
-	it("should return 1000 user data", (done) => {
+	it("testcase1# should return 1000 user data", (done) => {
 		let userNameGet = new AppGET(devurl, userPath, port)
 		userNameGet.setSessionToken(sessionToken)
 		userNameGet.GET("", (data: any, statusCode: number) => {
-			//data.length.should.equal(1000)
+			console.log('Get /v1/user/name testcase1# data.length statusCode',data.length,statusCode);
 			expect(data.length).to.be.at.most(1000)
 			statusCode.should.equal(200)
 			data.forEach(function(val){
@@ -29,14 +29,14 @@ describe('Get /v1/user/name', () => {
 		})
 	})
 
-	it("use limit 20 & should return 20 user data", (done) => {		
+	it("testcase2# use limit 20 & should return 20 user data", (done) => {
 		let getParameter: UserNameGetParameter = {
 			limit: 20
 		}
 		let userNameGet = new AppGET(devurl, userPath, port)
 		userNameGet.setSessionToken(sessionToken)
 		userNameGet.GET(getParameter, (data: any, statusCode: number) => {
-			//data.length.should.equal(20)
+			console.log('Get /v1/user/name testcase2# data.length statusCode',data.length,statusCode);
 			expect(data.length).to.be.at.most(20)
 			statusCode.should.equal(200)
 			data.forEach(function(val){
@@ -46,7 +46,7 @@ describe('Get /v1/user/name', () => {
 		})
 	})
 
-	it("use limit 10 and skip 10 & should return 10 user data with 10 skip", (done) => {
+	it("testcase3# use limit 10 and skip 10 & should return 10 user data with 10 skip", (done) => {
 		console.log("Get 40 data at first")
 		let getParameter: UserNameGetParameter = {
 			limit: 20
@@ -61,6 +61,7 @@ describe('Get /v1/user/name', () => {
 				val.should.have.property("username")
 			})
 			dataA = data
+			console.log('Get /v1/user/name testcase3# dataA.length statusCode',dataA.length,statusCode);
 			userNameGet1Test()
 		})
 
@@ -73,6 +74,7 @@ describe('Get /v1/user/name', () => {
 		userNameGet1.setSessionToken(sessionToken)
 		function userNameGet1Test(){
 			userNameGet1.GET(getParameter1,(data: any, statusCode: number) => {
+				console.log('Get /v1/user/name testcase3# data.length statusCode',data.length,statusCode);
 				data.length.should.equal(10)
 				statusCode.should.equal(200)
 				data.forEach(function(val){
@@ -84,7 +86,7 @@ describe('Get /v1/user/name', () => {
 		}
 	})
 
-	it("use sortby to sort date by name, createTime & should only return be sorted data", (done) => {
+	it("testcase4# use sortby to sort date by name, createTime & should only return be sorted data", (done) => {
 		let sortArray: Array<string> = [];
 		function sortCheck(sortby: string) {
 			let getParameter: UserNameGetParameter = {
@@ -112,20 +114,21 @@ describe('Get /v1/user/name', () => {
 		sortCheck("createTime")
 	})
 
-	it("use order as asc & should return data sort as ascend", (done) => {
+	it("testcase5# use order as asc & should return data sort as ascend", (done) => {
 		let getParameter: UserNameGetParameter = {
 			order: "asc"
 		}
 		let userNameGet = new AppGET(devurl, userPath, port)
 		userNameGet.setSessionToken(sessionToken)
 		userNameGet.GET(getParameter, (data: any, statusCode: number) => {
+			console.log('Get /v1/user/name testcase5# statusCode',statusCode);
 			statusCode.should.equal(200)
 			sortDateCheck(data, getParameter.order, "createdAt")
 			done();
 		})
 	})
 
-	it("Comprehensive test & should return data limit 100 with skip 10, filter data use username as 'user1' , sortby username order as ascend", (done) => {
+	it("testcase6# Comprehensive test & should return data limit 100 with skip 10, filter data use username as 'user1' , sortby username order as ascend", (done) => {
 		console.log("Get 20 data at first")
 		let dataA: any
 		let getParameter: UserNameGetParameter = {
@@ -170,7 +173,7 @@ describe('Get /v1/user/name', () => {
 	})
 
 
-	it("use feature wrong parameter & should return status code as 403", (done) => {
+	it("testcase7# use feature wrong parameter & should return status code as 403", (done) => {
 
 		function paramCheck(getParameter: any, paramError: string, param){
 			return new Promise(function(resolve, reject){
@@ -216,10 +219,11 @@ describe('Get /v1/user/name', () => {
 		})
 	})
 
-	it("use wrong sessionToken & should return status code as 401", (done) => {
+	it("testcase8# use wrong sessionToken & should return status code as 401", (done) => {
 		let userNameGet = new AppGET(devurl, userPath, port)
 		userNameGet.setSessionToken("wrong sessionToken")
 		userNameGet.GET("", (data: any, statusCode: number) => {
+			console.log('Get /v1/user/name testcase8# data statusCode',data,statusCode);
 			statusCode.should.equal(401)
 			data.should.equal('Invalid SessionToken')
 			done();
@@ -228,11 +232,12 @@ describe('Get /v1/user/name', () => {
 
 
 
-	it("group admin that username is test_group & should return users in this group", (done) => {
+	it("testcase9# group admin that username is test_group & should return users in this group", (done) => {
 		let sessionToken = require('../config').sessionToken.test_group
 		let nodeInfoGet = new AppGET(devurl, userPath, port)
 		nodeInfoGet.setSessionToken(sessionToken)
 		nodeInfoGet.GET("", (data: any, statusCode: number) => {
+			console.log('Get /v1/user/name testcase9# data.length statusCode',data.length,statusCode);
 			statusCode.should.equal(200)
 			data.forEach((value, i) => {
 				value.should.have.property("username")
@@ -243,11 +248,12 @@ describe('Get /v1/user/name', () => {
 		})
 	})
 
-	it("normal admin that username is test & should return user test", (done) => {
+	it("testcase10# normal admin that username is test & should return user test", (done) => {
 		let sessionToken = require('../config').sessionToken.test
 		let nodeInfoGet = new AppGET(devurl, userPath, port)
 		nodeInfoGet.setSessionToken(sessionToken)
 		nodeInfoGet.GET("",(data: any, statusCode: number) => {
+			console.log('Get /v1/user/name testcase10# data.length statusCode',data.length,statusCode);
 			statusCode.should.equal(200)			
 			data.forEach((value, i) => {
 				value.should.have.property("username")
@@ -264,7 +270,7 @@ describe('Put /v1/user/name', () => {
 	let userData: any = {}
 	let newUser: UserNamePutParameter
 
-	it("update a user with username and userInfo & should 201 success", (done) => {
+	it("testcase1# update a user with username and userInfo & should 201 success", (done) => {
 		newUser = {
 			username: "test",
 			newName: "test"
@@ -273,14 +279,14 @@ describe('Put /v1/user/name', () => {
 		userNamePut.setSessionToken(sessionToken)
 		userNamePut.PUT(newUser,
 			(data: any, statusCode: number) => {
-				console.log('data,statusCode',data,statusCode);
+				console.log('Put /v1/user/name testcase1# data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, update user name successfully")
 				done()
 			})
 	})
 
-	it("invalid sessionToken & should return 401 Invalid SessionToken", (done) => {
+	it("testcase2# invalid sessionToken & should return 401 Invalid SessionToken", (done) => {
 		newUser = {
 			username: "test",
 			newName: "test"
@@ -289,13 +295,14 @@ describe('Put /v1/user/name', () => {
 		userNamePut.setSessionToken("wrong sessionToken")
 		userNamePut.PUT(newUser,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/name testcase2# data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("Invalid SessionToken")
 				done()
 			})
 	})
 
-	it("user other user to update user test& should return 401 error", (done) => {
+	it("testcase3# user other user to update user test& should return 401 error", (done) => {
 		let sessionToken = require('../config').sessionToken.test_super
 		newUser = {
 			username: "test",
@@ -305,6 +312,7 @@ describe('Put /v1/user/name', () => {
 		userNamePut.setSessionToken(sessionToken)
 		userNamePut.PUT(newUser,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/name testcase3# data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("no authority to update the user")
 				done()

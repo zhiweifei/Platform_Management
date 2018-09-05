@@ -2,7 +2,7 @@ import fs = require('fs')
 import { expect } from 'chai'
 import 'chai/register-should'
 import 'mocha'
-import { AppLogin, AppPUT} from "../../lib/http-tools"
+import { AppLogin, AppPUT,AppPOST} from "../../lib/http-tools"
 import { sortCommonCheck, sortDateCheck } from "../../lib/sort"
 import querystring = require('querystring');
 import * as AV from 'leancloud-storage';
@@ -15,8 +15,6 @@ const userPath = "/v1/user/password"
 const loginPath = "/v1/login"
 const devurl = "protocol-access-test.leanapp.cn";
 const port = 80;
-class _User extends AV.Object {}
-AV.Object.register(_User)
 try{
 	AV.init({
 		appId: appID,
@@ -37,32 +35,18 @@ describe('Put /v1/user/password', () => {
 	}
 
 	beforeEach((done) => {
-		let putUser: AV.Object = new _User()
-		putUser.set('username', userData.username)
-		putUser.set('password', userData.password)
-		putUser.save(null, {useMasterKey: true}).then((objects) => {
-			userData.objectId = objects.id
-			let acl = new AV.ACL()
-			let administratorRole = new AV.Role('super_admin')
-			acl.setRoleReadAccess(administratorRole, true)
-			acl.setRoleWriteAccess(administratorRole, false)
-
-			let group_admin_test_groupRole = new AV.Role('group_admin_5b764f0efb4ffe0058960688')
-			acl.setRoleReadAccess(group_admin_test_groupRole, true)
-			acl.setRoleWriteAccess(group_admin_test_groupRole, false)
-
-			acl.setReadAccess(objects.id, true)
-			acl.setWriteAccess(objects.id, true);
-
-			objects.setACL(acl)
-			objects.save(null, {useMasterKey: true}).then((objects) => {
-				console.log("create user for update ok")
+		let newUser = {
+			username: userData.username,
+			password: userData.password
+		}
+		let userPost = new AppPOST(devurl, '/v1/user', port)
+		userPost.POST(newUser,
+			(data: any, statusCode: number) => {
+				statusCode.should.equal(201)
+				data.should.equal("success, build up new User successfully")
+				console.log("fake post user success")
 				done()
 			})
-		}, (error) => {
-			console.error("create user for update ok error", error)
-			done()
-		})
 	})
 
 
@@ -80,22 +64,24 @@ describe('Put /v1/user/password', () => {
 	})
 
 	afterEach((done) => {
-		let deleteUser = AV.Object.createWithoutData('_User', userData.objectId);
-		deleteUser.destroy({useMasterKey: true}).then(function (success) {
-		// delete success
-			console.log("delete fake data success")
-			done()
-		}, function (error) {
-		// delete fail
-			console.error("delete fake data error", error)
-			done()
+		let query = new AV.Query('_User');
+		query.equalTo("username", "testUser")
+		query.find({useMasterKey: true}).then(function(td){
+			AV.Object.destroyAll(td, {useMasterKey: true}).then(function (success) {
+				// delete success
+				console.log("delete post user success")
+				done()
+			}, function (error) {
+				// delete fail
+				done()
+			});
 		})
 	})
 
 
 
 
-	it("user self modify password & should return 201", (done) => {
+	it("testcase1# user self modify password & should return 201", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
 			oldPassword: userData.password,
@@ -105,6 +91,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase1# data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, update user password successfully")
 				userData.password = "newPassword"
@@ -112,13 +99,14 @@ describe('Put /v1/user/password', () => {
 			})
 	})
 
-	it("modify password with miss username & should return 403", (done) => {
+	it("testcase2# modify password with miss username & should return 403", (done) => {
 		let params: UserPasswordPutParameter = {
 		}
 		let userPasswordPut = new AppPUT(devurl, userPath, port)
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase2# data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("error, miss username")
 				done()
@@ -126,7 +114,7 @@ describe('Put /v1/user/password', () => {
 	})
 
 
-	it("modify password with miss oldPassword & should return 403", (done) => {
+	it("testcase3# modify password with miss oldPassword & should return 403", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
 			newPassword: "newPassword"
@@ -135,13 +123,14 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase3# data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("error, miss oldPassword")
 				done()
 			})
 	})
 
-	it("modify password with miss newPassword & should return 403", (done) => {
+	it("testcase4# modify password with miss newPassword & should return 403", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
 			oldPassword: userData.password
@@ -150,6 +139,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase4# data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("error, miss newPassword")
 				done()
@@ -157,7 +147,7 @@ describe('Put /v1/user/password', () => {
 	})
 
 
-	it("modify password with wrong oldPassword & should return 401", (done) => {
+	it("testcase5# modify password with wrong oldPassword & should return 401", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
 			oldPassword: "wrong password",
@@ -167,6 +157,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase5# data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("The username and password mismatch")
 				done()
@@ -175,7 +166,7 @@ describe('Put /v1/user/password', () => {
 
 
 
-	it("modify password with wrong sessionToken& should return 401", (done) => {
+	it("testcase6# modify password with wrong sessionToken& should return 401", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: "testUser",
 			oldPassword: "testUser",
@@ -185,14 +176,14 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken("wrong sessionToken")
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase6# data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("Invalid SessionToken")
 				done()
 			})
 	})
 
-//todo problem
-	it("other admin modify password & should return 401", (done) => {
+	it("testcase7# other admin modify password & should return 401", (done) => {
 		sessionToken = require('../config').sessionToken.test_guest
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
@@ -203,6 +194,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase7# data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("no authority to update the user")
 				done()
