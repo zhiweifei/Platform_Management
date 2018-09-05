@@ -32,7 +32,7 @@ var setGroupRoleToUserACL = function(newGroup, user){
 
 var relate_GroupToUser = function (User,newGroup,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
-    return findValidUser(User, '_User', 'username', sessionToken).then(function (objectUsers) {
+    return findValidUser(User, '_User', 'username').then(function (objectUsers) {
         //make sure all Users are right and findValidUser successfully
         if (objectUsers.length > 0 && objectUsers.length == User.length) {
             return new Promise(function(resolve, reject){
@@ -54,10 +54,10 @@ var relate_GroupToUser = function (User,newGroup,sessionToken) {
     })
 };
 
-var relate_UserToRole = function (User,ObjectId,admin,sessionToken) {
+var relate_UserToRole = function (User,ObjectId,admin) {
     var allUser;
     return new Promise(function (resolve, reject) {
-        findValidUser(User, '_User', 'username', sessionToken).then(function (objectUsers) {
+        findValidUser(User, '_User', 'username').then(function (objectUsers) {
             if(objectUsers.length >0){
                 allUser = objectUsers;
                 var roleQuery = new AV.Query(AV.Role);
@@ -162,11 +162,11 @@ var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admi
     var buildObject = [];
     if(Array.isArray(admin)){
         buildObject.push(relate_GroupToUser(group_user, NewGroupObject, sessionToken));
-        buildObject.push(relate_UserToRole(admin, NewGroupObject.id, "admin_", sessionToken));
-        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_", sessionToken))
+        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"));
+        buildObject.push(relate_UserToRole(admin, NewGroupObject.id, "admin_"));
     }else{
         buildObject.push(relate_GroupToUser(group_user, NewGroupObject, sessionToken));
-        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_", sessionToken))  
+        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"))  
     }
     return Promise.all(buildObject).then(function (result) {
         var addObject = [];
@@ -220,7 +220,7 @@ var find_delete_GroupUser = function (User,currentGroup,sessionToken) {
     return new Promise(function (resolve,reject) {
         if(User.length > 0) {
             //get all users object by findValidUser function
-            findValidUser(User, '_User', 'username', sessionToken).then(function (objectUsers) {
+            findValidUser(User, '_User', 'username').then(function (objectUsers) {
                 async.map(objectUsers, function (currentUser, callback) {
                     // find the object which need to deleted in GroupUserMap table
                     GroupUserMap_middleTable.findData(currentGroup, currentUser).then(function (result) {
@@ -277,7 +277,7 @@ var dealEachGroup = function (current,sessionToken) {
             }
             addObject.push(currentGroupObject);
             if(Array.isArray(newUserArr))
-                dealObject.push(dealNewUserArr(currentGroupObject,newUserArr))
+                dealObject.push(dealNewUserArr(currentGroupObject,newUserArr, sessionToken))
             //judge whether newUserArr,groupInfo At least one
             if(typeof newUserArr == 'undefined' && typeof groupInfo == 'undefined' && 
                 typeof GroupNewName == 'undefined'){
@@ -544,7 +544,7 @@ function groupInterface(req) {
             var postInfo = that.paramArray.body.value;
             async.map(postInfo,function (current,callback) {
 
-                findValidUser(current.user, '_User', 'username', that.sessionToken).then(function (objectUsers) {
+                findValidUser(current.user, '_User', 'username').then(function (objectUsers) {
                     //make sure all Users are right and findValidUser successfully
                     if (current.user == undefined || (objectUsers.length > 0 && objectUsers.length == current.user.length)) {
                     }
