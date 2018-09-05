@@ -32,7 +32,7 @@ describe('Put /v1/user/verify', () => {
                 done()
             })
     })
-	it("verify email & should return 201", (done) => {
+	it("testcase1# verify email & should return 201", (done) => {
 		let params: UserVerifyParameter = {
 			email: userData.email
 		}
@@ -40,14 +40,14 @@ describe('Put /v1/user/verify', () => {
 		userVerifyPost.setSessionToken(sessionToken)
 		userVerifyPost.POST(params,
 			(data: any, statusCode: number) => {
-				console.log('data statusCode',data,statusCode);
+				console.log('Put /v1/user/verify testcase1# data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, verify email or phone success")
 				done()
 			})
 	})
 
-	it.skip("verify phone & should return 201", (done) => {
+	it.skip("testcase2# verify phone & should return 201", (done) => {
 		let params: UserVerifyParameter = {
 			phone: userData.phone
 		}
@@ -55,6 +55,7 @@ describe('Put /v1/user/verify', () => {
 		userVerifyPost.setSessionToken(sessionToken)
 		userVerifyPost.POST(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/verify testcase2# data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, verify email or phone success")
 				done()
@@ -62,7 +63,7 @@ describe('Put /v1/user/verify', () => {
 	})
 
 
-	it("Invalid email & should return 403", (done) => {
+	it("testcase3# Invalid email & should return 403", (done) => {
 		let params: UserVerifyParameter = {
 			email: new Date().getTime().toString()
 		}
@@ -70,7 +71,7 @@ describe('Put /v1/user/verify', () => {
 		userVerifyPost.setSessionToken(sessionToken)
 		userVerifyPost.POST(params,
 			(data: any, statusCode: number) => {
-				console.log('data statusCode',data,statusCode);
+				console.log('Put /v1/user/verify testcase3# data statusCode',data,statusCode);
 				statusCode.should.equal(205)
 				data.should.equal("An user with the specified email was not found. ")
 				done()
@@ -78,7 +79,7 @@ describe('Put /v1/user/verify', () => {
 	})
 
 
-	it.skip("Invalid phone & should return 403", (done) => {
+	it.skip("testcase4# Invalid phone & should return 403", (done) => {
 		let params: UserVerifyParameter = {
 			username: userData.username,
 			phone: 1245464
@@ -87,19 +88,21 @@ describe('Put /v1/user/verify', () => {
 		userVerifyPost.setSessionToken(sessionToken)
 		userVerifyPost.POST(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/verify testcase4# data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("Invalid oldPassword")
 				done()
 			})
 	})
 
-	it("no params & should return 403", (done) => {
+	it("testcase5# no params & should return 403", (done) => {
 		let params: UserVerifyParameter = {
 		}
 		let userVerifyPost = new AppPOST(devurl, userPath, port)
 		userVerifyPost.setSessionToken(sessionToken)
 		userVerifyPost.POST(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/verify testcase5# data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("miss email")
 				done()

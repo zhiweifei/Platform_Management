@@ -15,8 +15,6 @@ const userPath = "/v1/user/password"
 const loginPath = "/v1/login"
 const devurl = "protocol-access-test.leanapp.cn";
 const port = 80;
-class _User extends AV.Object {}
-AV.Object.register(_User)
 try{
 	AV.init({
 		appId: appID,
@@ -95,7 +93,7 @@ describe('Put /v1/user/password', () => {
 
 
 
-	it("user self modify password & should return 201", (done) => {
+	it("testcase1# user self modify password & should return 201", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
 			oldPassword: userData.password,
@@ -105,6 +103,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase1# data statusCode',data,statusCode);
 				statusCode.should.equal(201)
 				data.should.equal("success, update user password successfully")
 				userData.password = "newPassword"
@@ -112,13 +111,14 @@ describe('Put /v1/user/password', () => {
 			})
 	})
 
-	it("modify password with miss username & should return 403", (done) => {
+	it("testcase2# modify password with miss username & should return 403", (done) => {
 		let params: UserPasswordPutParameter = {
 		}
 		let userPasswordPut = new AppPUT(devurl, userPath, port)
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase2# data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("error, miss username")
 				done()
@@ -126,7 +126,7 @@ describe('Put /v1/user/password', () => {
 	})
 
 
-	it("modify password with miss oldPassword & should return 403", (done) => {
+	it("testcase3# modify password with miss oldPassword & should return 403", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
 			newPassword: "newPassword"
@@ -135,13 +135,14 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase3# data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("error, miss oldPassword")
 				done()
 			})
 	})
 
-	it("modify password with miss newPassword & should return 403", (done) => {
+	it("testcase4# modify password with miss newPassword & should return 403", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
 			oldPassword: userData.password
@@ -150,6 +151,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase4# data statusCode',data,statusCode);
 				statusCode.should.equal(403)
 				data.should.equal("error, miss newPassword")
 				done()
@@ -157,7 +159,7 @@ describe('Put /v1/user/password', () => {
 	})
 
 
-	it("modify password with wrong oldPassword & should return 401", (done) => {
+	it("testcase5# modify password with wrong oldPassword & should return 401", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
 			oldPassword: "wrong password",
@@ -167,6 +169,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase5# data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("The username and password mismatch")
 				done()
@@ -175,7 +178,7 @@ describe('Put /v1/user/password', () => {
 
 
 
-	it("modify password with wrong sessionToken& should return 401", (done) => {
+	it("testcase6# modify password with wrong sessionToken& should return 401", (done) => {
 		let params: UserPasswordPutParameter = {
 			username: "testUser",
 			oldPassword: "testUser",
@@ -185,14 +188,14 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken("wrong sessionToken")
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase6# data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("Invalid SessionToken")
 				done()
 			})
 	})
 
-//todo problem
-	it("other admin modify password & should return 401", (done) => {
+	it("testcase7# other admin modify password & should return 401", (done) => {
 		sessionToken = require('../config').sessionToken.test_guest
 		let params: UserPasswordPutParameter = {
 			username: userData.username,
@@ -203,6 +206,7 @@ describe('Put /v1/user/password', () => {
 		userPasswordPut.setSessionToken(sessionToken)
 		userPasswordPut.PUT(params,
 			(data: any, statusCode: number) => {
+				console.log('Put /v1/user/password testcase7# data statusCode',data,statusCode);
 				statusCode.should.equal(401)
 				data.should.equal("no authority to update the user")
 				done()
