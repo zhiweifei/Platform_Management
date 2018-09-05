@@ -16,11 +16,12 @@ const port = 80;
 
 describe('Get /v1/group/name', () => {
 
-	it("default parameter should return 1000 group data by descend", (done) => {
+	it("testcase1# default parameter should return 1000 group data by descend", (done) => {
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET("", (data: any, statusCode: number) =>{
-			//data.length.should.equal(1000)
+			console.log('Get /v1/group/name testcase1# data.length',data.length);
+			console.log('Get /v1/group/name testcase1# data',statusCode);
 			expect(data.length).to.be.at.most(1000)
 			statusCode.should.equal(200)
 			//Check if sortby created time and use descend
@@ -29,20 +30,22 @@ describe('Get /v1/group/name', () => {
 		})
 	})
 
-	it("use limit 20 &  should return 20 group data", (done) => {
+	it("testcase2# use limit 20 &  should return 20 group data", (done) => {
 		let groupQuery: GroupQueryParameter = {
 			limit: 20
 		}
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery, (data: any, statusCode: number) =>{
+			console.log('Get /v1/group/name testcase2# data.length',data.length);
+			console.log('Get /v1/group/name testcase2# data',statusCode);
 			data.length.should.equal(20)
 			statusCode.should.equal(200)
 			done()
 		})
 	})
 
-	it("use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
+	it("testcase3# use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
 		console.log("Get 40 data at first")
 		let groupQuery: GroupQueryParameter = {
 			limit: 20
@@ -57,6 +60,8 @@ describe('Get /v1/group/name', () => {
 			groupNameGet1.GET(groupQuery1, (data: any, statusCode: number) =>{
 				data.length.should.equal(10)
 				statusCode.should.equal(200)
+				console.log('Get /v1/group/name testcase3# dataA.length',dataA.length);
+				console.log('Get /v1/group/name testcase3# data.length',data.length);
 				expect(data).to.eql(dataA.slice(-10))
 				done()
 			})
@@ -71,7 +76,7 @@ describe('Get /v1/group/name', () => {
 		groupNameGet1.setSessionToken(sessionToken)
 	})
 
-	it("use sortby to sort date by name, createTime & should only return be sorted data", (done) => {
+	it("testcase4# use sortby to sort date by name, createTime & should only return be sorted data", (done) => {
 		let sortArray: Array<string> = [];
 
 		function sortCheck(sortby: string) {
@@ -97,7 +102,7 @@ describe('Get /v1/group/name', () => {
 		sortCheck("createTime")
 	})
 
-	it("use order as asc & should return data sort as ascend", (done) => {
+	it("testcase5# use order as asc & should return data sort as ascend", (done) => {
 		let groupQuery: GroupQueryParameter = {
 				order: "asc"
 			}
@@ -112,7 +117,7 @@ describe('Get /v1/group/name', () => {
 
 	})
 
-	it("Comprehensive test & should return data limit 100 with skip 10, filter data use sortby name order as ascend", (done) => {
+	it("testcase6# Comprehensive test & should return data limit 100 with skip 10, filter data use sortby name order as ascend", (done) => {
 		console.log("Get 20 data at first")
 		let dataA: any
 		let groupQuery: GroupQueryParameter = {
@@ -159,7 +164,7 @@ describe('Get /v1/group/name', () => {
 		}
 	})
 
-	it("use feature wrong parameter & should return status code as 403", (done) => {
+	it("testcase7# use feature wrong parameter & should return status code as 403", (done) => {
 		let groupQuery: GroupQueryParameter = {
 				limit: [1000]
 			}
@@ -167,27 +172,29 @@ describe('Get /v1/group/name', () => {
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery, (data: any, statusCode: number) => {
 			statusCode.should.equal(403)
+			console.log('Get /v1/group/name testcase7# data',data);
 			data.should.equal('error, invalid param in limit')
 			done()
 		})
 	})
 
-	it("use wrong sessionToken & should return status code as 401", (done) => {
+	it("testcase8# use wrong sessionToken & should return status code as 401", (done) => {
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken("wrong token")
 		groupNameGet.GET("", (data: any, statusCode: number) => {
+			console.log('Get /v1/group/name testcase8# data',data);
 			statusCode.should.equal(401)
 			data.should.equal('Invalid SessionToken')
 			done();
 		})
 	})
 
-	it("group admin that username is test_group & should return group:test_group ", (done) => {
+	it("testcase9# group admin that username is test_group & should return group:test_group ", (done) => {
 		let sessionToken = require('../../config').sessionToken.test_group
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET("",(data: any, statusCode: number) => {
-			console.log('data statusCode',data,statusCode);
+			console.log('Get /v1/group/name testcase9# data',data);
 			data.forEach(function(val){
 				val.should.have.property("name")
 				val["name"].should.equal("test_group")
@@ -197,12 +204,12 @@ describe('Get /v1/group/name', () => {
 		})
 	})
 
-	it("normal admin that username is test & should return []", (done) => {
+	it("testcase10# normal admin that username is test & should return []", (done) => {
 		let sessionToken = require('../../config').sessionToken.test
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET("",(data: any, statusCode: number) => {
-			console.log('data',data);
+			console.log('Get /v1/group/name testcase10# data',data);
 			data.length.should.equal(1)
 			statusCode.should.equal(200)
 			done();
