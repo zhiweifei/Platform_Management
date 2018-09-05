@@ -542,22 +542,22 @@ function groupInterface(req) {
     this.buildAllGroup = function () {
         return new Promise(function (resolve,reject) {
             var postInfo = that.paramArray.body.value;
-            async.map(postInfo,function (current,callback) {
+            async.map(postInfo,function (groupParams,callback) {
 
-                findValidUser(current.user, '_User', 'username').then(function (objectUsers) {
+                findValidUser(groupParams.user, '_User', 'username').then(function (objectUsers) {
                     //make sure all Users are right and findValidUser successfully
-                    if (current.user == undefined || (objectUsers.length > 0 && objectUsers.length == current.user.length)) {
+                    if (groupParams.user == undefined || (objectUsers.length > 0 && objectUsers.length == groupParams.user.length)) {
                     }
                     else {
                         // reject(new AV.Error(403, 'Invalid user'))
                         throw(new AV.Error(403, 'Invalid user'))
                     }
                 }).then(function(){
-                    return buildUpOneGroup(current, that.sessionToken)
+                    return buildUpOneGroup(groupParams, that.sessionToken)
                 }).then(function(request){
                     return buildNewGroupRole(request)
                 }).then(function(group){
-                    var admin = current.user;
+                    var admin = groupParams.user;
                     var group_admin = [that.login_username];
                     var group_user;
                     if(Array.isArray(admin)){
