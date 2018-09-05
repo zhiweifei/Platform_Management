@@ -61,31 +61,31 @@ describe('Get /v1/group/user', () => {
 	it("testcase4# use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
 		console.log("Get 20 data at first")
 		let groupQuery: GroupQueryParameter = {
-			name: 'test_group',
-			limit: 20
+			name: 'testGroup_user',
+			limit: 4
 		}
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		let dataA: any
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery, (data: any, statusCode: number) =>{
-			data.length.should.equal(20)
+			data.length.should.equal(4)
 			statusCode.should.equal(200)
 			dataA = data
 			groupNameGet1.GET(groupQuery1, (data: any, statusCode: number) =>{
-				data.length.should.equal(10)
+				data.length.should.equal(2)
 				statusCode.should.equal(200)
 				console.log('Get /v1/group/user testcase4# dataA.length',dataA.length);
 				console.log('Get /v1/group/user testcase4# data.length',data.length);
-				expect(data).to.eql(dataA.slice(-10))
+				expect(data).to.eql(dataA.slice(-2))
 				done()
 			})
 		})
 
 		console.log("Skip 20 data and get 20 data, then compare")
 		let groupQuery1: GroupQueryParameter = {
-			name: 'test_group',
-			limit: 10,
-			skip: 10
+			name: 'testGroup_user',
+			limit: 2,
+			skip: 2
 		}
 		let groupNameGet1 = new AppGET(devurl, groupNamePath, port)
 		groupNameGet1.setSessionToken(sessionToken)
@@ -95,8 +95,8 @@ describe('Get /v1/group/user', () => {
 		console.log("Get 20 data at first")
 		let dataA: any
 		let groupQuery: GroupQueryParameter = {
-				name : "test_group",
-				limit: 20,
+				name : "testGroup_user",
+				limit: 4,
 				sortby: "name",
 				order: "asc"
 			}
@@ -111,9 +111,9 @@ describe('Get /v1/group/user', () => {
 
 
 		let groupQuery1: GroupQueryParameter = {
-				name : "test_group",
-				limit: 10,
-				skip: 10,
+				name : "testGroup_user",
+				limit: 2,
+				skip: 2,
 				sortby: "name",
 				order: "asc"
 			}
@@ -124,9 +124,9 @@ describe('Get /v1/group/user', () => {
 				statusCode.should.equal(200)
 
 				console.log('Get /v1/group/user testcase5# second data.length',data.length);
-				data.length.should.equal(10)
+				data.length.should.equal(2)
 
-				expect(data.toString()).to.equal(dataA.slice(-10).toString())
+				expect(data.toString()).to.equal(dataA.slice(-2).toString())
 
 				data.forEach((value, i) => {
 					value.should.have.property('username')
