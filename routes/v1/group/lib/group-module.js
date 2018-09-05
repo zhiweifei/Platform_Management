@@ -83,6 +83,52 @@ var relate_UserToRole = function (User,ObjectId,admin,sessionToken) {
     })
 };
 
+var buildNewGroupRole = function(request) {
+    var setDataAcl = require('../../lib/setAcl');
+    var GroupObjectId = request.id;
+    if(!GroupObjectId){
+        throw new AV.Cloud.Error('AccessLink-Platform cloud# Group afterSave No Group ObjectId!');
+    }
+    else{
+        var superRoleName = 'super_admin';
+        var newRole = AV.Object.extend('_Role');
+        var buildGroupRole = new newRole();
+        var newGroupRoleName = 'group_admin_' + GroupObjectId;
+        buildGroupRole.set('name',newGroupRoleName);
+        buildGroupRole.set('Group', request);
+        buildGroupRole.setACL(setDataAcl([superRoleName,newGroupRoleName]));
+        var buildGroupNormalRole = new newRole();
+        var newGroupNormalRoleName = 'admin_' + GroupObjectId;
+        buildGroupNormalRole.set('name',newGroupNormalRoleName);
+        buildGroupNormalRole.set('Group', request);
+        buildGroupNormalRole.setACL(setDataAcl([superRoleName,newGroupRoleName,newGroupNormalRoleName]));
+        var GroupObject = AV.Object.createWithoutData('Group', GroupObjectId);
+        var roleAcl = new AV.ACL();
+        roleAcl.setRoleWriteAccess(superRoleName, true);
+        roleAcl.setRoleReadAccess(superRoleName, true);
+        roleAcl.setRoleWriteAccess(newGroupRoleName, true);
+        roleAcl.setRoleReadAccess(newGroupRoleName, true);
+        roleAcl.setRoleReadAccess(newGroupNormalRoleName, true);
+        GroupObject.set('ACL', roleAcl);
+        //To prevent program from entering cloud function" dead circulation "
+        GroupObject.disableBeforeHook();
+        GroupObject.disableAfterHook();
+        return AV.Object.saveAll([buildGroupRole,buildGroupNormalRole,GroupObject],{'useMasterKey':true}).then(function (result) {
+            console.log("AccessLink-Platform cloud# Group afterSave set new Group Role success");
+            //result[0] is group_admin role
+            //result[1] is admin role
+            result[1].getRoles().add(result[1]);
+            result[1].getRoles().add(result[0]);
+            result[0].getRoles().add(result[0]);
+            return AV.Object.saveAll([result[0],result[1]],{useMasterKey:true}).then(function(){
+                return request
+            })
+        }).catch(function (error) {
+            console.error("AccessLink-Platform cloud# Group afterSave set new Group Role failed",error)
+        });
+    }
+}
+
 var buildUpOneGroup = function (currentBuild,sessionToken) {
 
     return new Promise(function (resolve,reject) {
@@ -103,7 +149,7 @@ var buildUpOneGroup = function (currentBuild,sessionToken) {
             }
         }
         NewGroup.save(null,{'sessionToken': sessionToken}).then(function(NewGroupObject){
-            resolve([NewGroupObject,related_user])
+            resolve(NewGroupObject)
         }).catch(function(error){
             reject(error)
         })
@@ -366,7 +412,7 @@ function groupInterface(req) {
                     if(!val.user && !val.groupInfo){
                         throw new AV.Error(403,"error, params include user or groupInfo at least one")
                     }
-                    
+
                     if(val.user){
                         if(Object.prototype.toString.call(val.user)!="[object Array]"){
                             throw new AV.Error(403,"Invalid user")
@@ -508,16 +554,18 @@ function groupInterface(req) {
                     }
                 }).then(function(){
                     return buildUpOneGroup(current, that.sessionToken)
-                }).then(function(arr){
-                    var admin = arr[1];
+                }).then(function(request){
+                    return buildNewGroupRole(request)
+                }).then(function(group){
+                    var admin = current.user;
                     var group_admin = [that.login_username];
                     var group_user;
                     if(Array.isArray(admin)){
-                        group_user = arr[1].concat(that.login_username);
+                        group_user = admin.concat(that.login_username);
                     }else{
                         group_user = [that.login_username]
                     }
-                    return relateGroupRoleToUser(arr[0],group_user,admin,group_admin, that.sessionToken)
+                    return relateGroupRoleToUser(group,group_user,admin,group_admin, that.sessionToken)
                 }).catch(function(error){
                     return dealBuildGroupErr(error)
                 }).then(function (result) {
