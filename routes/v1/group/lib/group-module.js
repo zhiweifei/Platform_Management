@@ -138,9 +138,6 @@ var buildNewGroupRole = function(request) {
         roleAcl.setRoleReadAccess(newGroupRoleName, true);
         roleAcl.setRoleReadAccess(newGroupNormalRoleName, true);
         GroupObject.set('ACL', roleAcl);
-        //To prevent program from entering cloud function" dead circulation "
-        GroupObject.disableBeforeHook();
-        GroupObject.disableAfterHook();
         return AV.Object.saveAll([buildGroupRole,buildGroupNormalRole,GroupObject],{'useMasterKey':true}).then(function (result) {
             console.log("AccessLink-Platform cloud# Group afterSave set new Group Role success");
             //result[0] is group_admin role
@@ -477,10 +474,8 @@ function groupInterface(req) {
                         throw new AV.Error(403,"error, params include user or groupInfo at least one")
                     }
 
-                    if(val.user){
-                        if(Object.prototype.toString.call(val.user)!="[object Array]"){
-                            throw new AV.Error(403,"Invalid user")
-                        }   
+                    if(val.user && Object.prototype.toString.call(val.user)!="[object Array]"){
+                        throw new AV.Error(403,"Invalid user")
                     }
 
                 });
