@@ -284,7 +284,7 @@ describe('Get /v1/user', () => {
 		let nodeInfoGet = new AppGET(devurl, userPath, port)
 		nodeInfoGet.setSessionToken(sessionToken)
 		nodeInfoGet.GET("", (data: any, statusCode: number) => {
-			console.log('Get /v1/user testcase12# statusCode'statusCode);
+			console.log('Get /v1/user testcase12# statusCode',statusCode);
 			statusCode.should.equal(200)
 			data.forEach((value, i) => {
 				if(value.username == 'test_group')
@@ -633,44 +633,32 @@ describe('Delete /v1/user', () => {
 	let userData: any = {}
 
 	beforeEach((done) => {
-		let putUser: AV.Object = new _User()
-		putUser.set('username', "testUser")
-		putUser.set('password', "testUser")
-		putUser.save(null, {useMasterKey: true}).then((objects) => {
-			userData.objectId = objects.id
-			let acl = new AV.ACL()
-			let administratorRole = new AV.Role('super_admin')
-			acl.setRoleReadAccess(administratorRole, true)
-			acl.setRoleWriteAccess(administratorRole, false)
-
-			let group_admin_test_groupRole = new AV.Role('group_admin_5b764f0efb4ffe0058960688')
-			acl.setRoleReadAccess(group_admin_test_groupRole, true)
-			acl.setRoleWriteAccess(group_admin_test_groupRole, false)
-
-			acl.setReadAccess(objects.id, true)
-			acl.setWriteAccess(objects.id, true);
-
-			objects.setACL(acl)
-			objects.save(null, {useMasterKey: true}).then((objects) => {
-				console.log("create user for update ok")
+		let newUser: UserPostParameter = {
+			username: "testUser",
+			password: "testUser"
+		}
+		let userPost = new AppPOST(devurl, userPath, port)
+		userPost.POST(newUser,
+			(data: any, statusCode: number) => {
+				statusCode.should.equal(201)
+				data.should.equal("success, build up new User successfully")
+				console.log("fake post user success")
 				done()
 			})
-		}, (error) => {
-			console.error("create user for update ok error", error)
-			done()
-		})
 	})
 
 	afterEach((done) => {
-		let deleteUser = AV.Object.createWithoutData('_User', userData.objectId);
-		deleteUser.destroy({useMasterKey: true}).then(function (success) {
-		// delete success
-			console.log("delete fake data success")
-			done()
-		}, function (error) {
-		// delete fail
-			console.error("delete fake data error", error)
-			done()
+		let query = new AV.Query('_User');
+		query.equalTo("username", "testUser")
+		query.find({useMasterKey: true}).then(function(td){
+			AV.Object.destroyAll(td, {useMasterKey: true}).then(function (success) {
+				// delete success
+				console.log("delete post user success")
+				done()
+			}, function (error) {
+				// delete fail
+				done()
+			});
 		})
 	})
 
