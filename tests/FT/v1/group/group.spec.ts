@@ -479,8 +479,8 @@ describe('Post /v1/group', () => {
 
 	it("testcase11# create new group with name, many users, and groupInfo & should return 'success, relate to users successfully'", (done) => {
 		newGroup = [{
-			name: "testGroup_user",
-			user: ["test","testUser1","testUser2","testUser3","testUser4","testUser5"],
+			name: "testGroup" + new Date().getTime(),
+			user: ["testUser4","testUser5","testUser6","testUser7"],
 			groupInfo: "testInfo"
 		}]
 		let groupPost = new AppPOST(devurl, groupPath, port)
@@ -577,7 +577,7 @@ describe('Put /v1/group', () => {
                     })
 	})
 
-	it("testcase5# update group with already related user & should return 401 status code", (done) => {
+	it("testcase5# update group with already related user & should return 201 status code", (done) => {
 		let updateGroup: Array<GroupPutParameter> = [{
 			name: "test_group",
 			user: ["test"]
@@ -587,8 +587,8 @@ describe('Put /v1/group', () => {
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
 				console.log('Put /v1/group testcase5# data statusCode',data,statusCode);
-				statusCode.should.equal(401)
-				data.should.equal("this group have already relate to these users")
+				statusCode.should.equal(201)
+				data.should.equal("success, update group successfully")
 				done()
 			})
 	})
