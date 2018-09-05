@@ -551,22 +551,34 @@ describe('Put /v1/group', () => {
 	})
 
 	it("testcase4# update group with user & should return 201 status code", (done) => {
-		let updateGroup: Array<GroupPutParameter> = [{
-				name: "test_group",
-				user: ["test"]
-			}]
-		let groupPUT = new AppPUT(devurl, groupPath, port)
-		groupPUT.setSessionToken(sessionToken)
-		groupPUT.PUT(updateGroup,
-			(data: any, statusCode: number) => {
-				console.log('Put /v1/group testcase4# data statusCode',data,statusCode);
-				statusCode.should.equal(201)
-				data.should.equal("success, update group successfully")
-				done()
-			})
+	    let username = "testGroupUser" + new Date().getTime()
+        let newUser = {
+            username: username,
+            password: "test"
+        }
+        let userPost = new AppPOST(devurl, '/v1/user', port)
+        userPost.POST(newUser,
+            (data: any, statusCode: number) => {
+                statusCode.should.equal(201)
+                data.should.equal("success, build up new User successfully")
+                let updateGroup: Array<GroupPutParameter> = [{
+                    name: "test_group",
+                    user: [username]
+                }]
+                let groupPUT = new AppPUT(devurl, groupPath, port)
+                groupPUT.setSessionToken(sessionToken)
+                groupPUT.PUT(updateGroup,
+                    (data: any, statusCode: number) => {
+                        console.log('Put /v1/group testcase4# data statusCode',data,statusCode);
+                        statusCode.should.equal(201)
+                        data.should.equal("success, update group successfully")
+                        done()
+                    })
+            })
+
 	})
 
-	it("testcase5# update group with already related user & should return 403 status code", (done) => {
+	it("testcase5# update group with already related user & should return 401 status code", (done) => {
 		let updateGroup: Array<GroupPutParameter> = [{
 			name: "test_group",
 			user: ["test"]
@@ -576,7 +588,7 @@ describe('Put /v1/group', () => {
 		groupPUT.PUT(updateGroup,
 			(data: any, statusCode: number) => {
 				console.log('Put /v1/group testcase5# data statusCode',data,statusCode);
-				statusCode.should.equal(403)
+				statusCode.should.equal(401)
 				data.should.equal("this group have already relate to these users")
 				done()
 			})
