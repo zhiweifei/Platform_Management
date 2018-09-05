@@ -12,30 +12,32 @@ const config = require("../../config.json")
 
 describe('Get /v1/node/nodeId', () => {
 
-	it("default parameter should return 1000 data and statusCode 200", (done) => {
+	it("testcase1# default parameter should return 1000 data and statusCode 200", (done) => {
 		let http = new httpRequest(devurl, port, path)
 		http.setHeaders({sessionToken: config.sessionToken.test_super})
-		http.GET('', function(data, statusCode){	
+		http.GET('', function(data, statusCode){
+			console.log('Get /v1/node/nodeId testcase1# data.length statusCode',data.length,statusCode);
 			data.length.should.within(0, 1000)
 			statusCode.should.equal(200)
 			done()
 		})
 	})
 
-	it("limit 10 should return 10 data and statusCode 200", (done) => {
+	it("testcase2# limit 10 should return 10 data and statusCode 200", (done) => {
 		let parameter = {
 			limit: 10
 		}
 		let http = new httpRequest(devurl, port, path)
 		http.setHeaders({sessionToken: config.sessionToken.test_super})
-		http.GET(parameter, function(data, statusCode){	
+		http.GET(parameter, function(data, statusCode){
+			console.log('Get /v1/node/nodeId testcase1# data.length statusCode',data.length,statusCode);
 			data.length.should.equal(10)
 			statusCode.should.equal(200)
 			done()
 		})
 	})
 
-	it("skip 10 should return data skip 10 data and statusCode 200", (done) => {
+	it("testcase3# skip 10 should return data skip 10 data and statusCode 200", (done) => {
 		console.log("get 20 data first")
 		let parameter = {
 			limit: 20
@@ -57,7 +59,8 @@ describe('Get /v1/node/nodeId', () => {
 		let http1 = new httpRequest(devurl, port, path)
 		http1.setHeaders({sessionToken: config.sessionToken.test_super})
 		function httpGet1(){
-			http1.GET(parameter1, function(data, statusCode){	
+			http1.GET(parameter1, function(data, statusCode){
+				console.log('Get /v1/node/nodeId testcase3# data.length statusCode',data.length,statusCode);
 				data.length.should.equal(10)
 				statusCode.should.equal(200)
 				expect(data).to.deep.equal(Data.slice(10))
@@ -66,7 +69,7 @@ describe('Get /v1/node/nodeId', () => {
 		}
 	})
 
-	it("use sortby 'nodeId' or 'createTime' and order 'asc' or 'desc' should return data with relative sortby and statusCode 200", (done) => {
+	it("testcase4# use sortby 'nodeId' or 'createTime' and order 'asc' or 'desc' should return data with relative sortby and statusCode 200", (done) => {
 		function sortCheck(sortby: string, order: string) {
 			return new Promise(function(resolve, reject){
 				let parameter= {
@@ -103,10 +106,11 @@ describe('Get /v1/node/nodeId', () => {
 
 	})
 
-	it("invalid sessionToken should return message 'Invalid SessionToken' and statusCode 401", (done) => {
+	it("testcase5# invalid sessionToken should return message 'Invalid SessionToken' and statusCode 401", (done) => {
 		let http = new httpRequest(devurl, port, path)
 		http.setHeaders({sessionToken: "wrong"})
-		http.GET("", function(data, statusCode){	
+		http.GET("", function(data, statusCode){
+			console.log('Get /v1/node/nodeId testcase5# data statusCode',data,statusCode);
 			data.should.equal("Invalid SessionToken")
 			statusCode.should.equal(401)
 			done()
