@@ -631,11 +631,14 @@ describe('Put /v1/user', () => {
 describe('Delete /v1/user', () => {
 	let sessionToken = require('../config').sessionToken.test_super
 	let userData: any = {}
-
+	let configData : UserPostParameter = {
+		username: "testUser",
+		password: "testUser"
+	};
 	beforeEach((done) => {
 		let newUser: UserPostParameter = {
-			username: "testUser",
-			password: "testUser"
+			username: configData.username,
+			password: configData.password
 		}
 		let userPost = new AppPOST(devurl, userPath, port)
 		userPost.POST(newUser,
@@ -649,7 +652,7 @@ describe('Delete /v1/user', () => {
 
 	afterEach((done) => {
 		let query = new AV.Query('_User');
-		query.equalTo("username", "testUser")
+		query.equalTo("username", configData.username)
 		query.find({useMasterKey: true}).then(function(td){
 			AV.Object.destroyAll(td, {useMasterKey: true}).then(function (success) {
 				// delete success
