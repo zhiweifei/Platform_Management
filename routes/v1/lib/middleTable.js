@@ -104,21 +104,17 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
     }
 
 /**
-* rewrite field2 acl
-*/
-    var rewrite_aclByFiled1 = function (request,filed1TableName) {
+     * 重写field2 acl
+     * @param request: 中间表数据对象
+     */
+    var rewrite_aclByFiled1 = function (request) {
+        var filed1_Object = request.object.get(that.filed1);
         var filed2_Object = request.object.get(that.filed2);
         return filed2_Object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
             var filed2_ACL_Json = result.getACL();
             var alc_UseJson = filed2_ACL_Json['permissionsById'];
-            var resultJsonObject = {};
-            for (var attr in alc_UseJson) {
-                // rewrite acl
-                if(!(attr == 'role:group_admin_' + filed1_Object.id || attr == filed1_Object.id)){
-                    resultJsonObject[attr] = alc_UseJson[attr];
-                }
-            }
-            filed2_Object.set('ACL',resultJsonObject);
+            delete alc_UseJson['role:group_admin_' + filed1_Object.id];
+            filed2_Object.set('ACL',alc_UseJson);
             return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
                 console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave set ACL ok");
             })
@@ -127,10 +123,10 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
         })
     };
 
-    this.afterDelete = function (filed1TableName) {
+    this.afterDelete = function () {
 
         AV.Cloud.afterDelete(this.tableName, function(request) {
-            rewrite_aclByFiled1(request,filed1TableName);
+            rewrite_aclByFiled1(request);
         });
 
     }
