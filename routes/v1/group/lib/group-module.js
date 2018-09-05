@@ -7,8 +7,11 @@ var ArrayFindDifference = require('../../lib/ArrayFindDifference');
 var middleTable = require('../../lib/middleTable');
 
 /**
-*find valid users between param users 
-*/
+     * 从传参里找到正确的用户
+     * @param ArrParam: 参数里的user数组
+     * @param table: 查询的表格名
+     * @param field: 表格里要匹配的属性
+     */
 var findValidUser =  function (ArrParam,table,field) {
     var Query = new AV.Query(table);
     Query.containedIn(field, typeof ArrParam=='undefined'? []:ArrParam);
@@ -18,8 +21,10 @@ var findValidUser =  function (ArrParam,table,field) {
 };
 
 /**
-* set group role acl to user
-*/
+     * 给组织关联用户设置组织管理员权限
+     * @param newGroup: 创建的新组织
+     * @param user: 关联用户
+     */
 var setGroupRoleToUserACL = function(newGroup, user){
     var groupid = newGroup.toJSON().objectId;
     return user.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
@@ -36,9 +41,13 @@ var setGroupRoleToUserACL = function(newGroup, user){
     })
 }
 
+
 /**
-*relate group to user
-*/
+     * 中间表里创建组织用户关联数据
+     * @param User: 关联用户
+     * @param newGroup: 创建的新组织
+     * @param sessionToken: 创建者的sessionToken
+     */
 var relate_GroupToUser = function (User,newGroup,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
     return findValidUser(User, '_User', 'username').then(function (objectUsers) {
@@ -64,8 +73,11 @@ var relate_GroupToUser = function (User,newGroup,sessionToken) {
 };
 
 /**
-*relate user to group role
-*/
+     * 组织role关联用户
+     * @param User: 关联用户
+     * @param 组织的ObjectId: ObjectId
+     * @param admin: 管理员类型
+     */
 var relate_UserToRole = function (User,ObjectId,admin) {
     var allUser;
     return new Promise(function (resolve, reject) {
@@ -96,9 +108,9 @@ var relate_UserToRole = function (User,ObjectId,admin) {
 };
 
 /**
-*after build new group
-*build relative roles
-*/
+     * 创建组织角色
+     * @param request: 创建的组织对象
+     */
 var buildNewGroupRole = function(request) {
     var setDataAcl = require('../../lib/setAcl');
     var GroupObjectId = request.id;
@@ -145,9 +157,12 @@ var buildNewGroupRole = function(request) {
     }
 }
 
+
 /**
-*build one group
-*/
+     * 创建一个组织
+     * @param currentBuild: 创建当前组织请求的参数
+     * @param sessionToken: 调用api的用户的sessionToken
+     */
 var buildUpOneGroup = function (currentBuild,sessionToken) {
 
     return new Promise(function (resolve,reject) {
@@ -178,8 +193,13 @@ var buildUpOneGroup = function (currentBuild,sessionToken) {
 };
 
 /**
-* reletion role to user
-*/
+     * 用户关联组织和角色
+     * @param NewGroupObject: 新组织的对象
+     * @param group_user: 请求api参数中的user
+     * @param admin: 普通管理者组成的数组
+     * @param group_admin: 组织管理者组成的数组
+     * @param sessionToken: 调用api的用户的sessionToken
+     */
 var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admin,sessionToken){
     var buildObject = [];
     if(Array.isArray(admin)){
@@ -207,8 +227,9 @@ var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admi
 }
 
 /**
-* deal with error
-*/
+     * 处理捕获的错误
+     * @param error: 捕获的错误
+     */
 var dealBuildGroupErr= function(error){
         console.error('AccessLink-Platform /group/post#  build up group error',error);
         if(error.hasOwnProperty('message')) {
@@ -240,8 +261,11 @@ var dealBuildGroupErr= function(error){
 }
 
 /**
-*find delete user
-*/
+     * 查找要删除的中间表GroupUserMap数据
+     * @param User: 当前组织中包含的指定用户
+     * @param currentGroup: 当前组织
+     * @param sessionToken: 调用api的用户的sessionToken
+     */
 var find_delete_GroupUser = function (User,currentGroup,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
 
@@ -279,8 +303,11 @@ var find_delete_GroupUser = function (User,currentGroup,sessionToken) {
 };
 
 /**
-*deal with group
-*/
+     * 查找要删除的中间表GroupUserMap数据
+     * @param User: 当前组织中包含的指定用户
+     * @param currentGroup: 当前组织
+     * @param sessionToken: 调用api的用户的sessionToken
+     */
 var dealEachGroup = function (current,sessionToken) {
 
     return new Promise(function (resolve,reject) {
@@ -334,8 +361,11 @@ var dealEachGroup = function (current,sessionToken) {
 };
 
 /**
-* deal with new relative user
-*/
+     * 查找要删除的中间表GroupUserMap数据
+     * @param User: 当前组织中包含的指定用户
+     * @param currentGroup: 当前组织
+     * @param sessionToken: 调用api的用户的sessionToken
+     */
 var dealNewUserArr = function (currentGroupObject,newUserArr,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
 
