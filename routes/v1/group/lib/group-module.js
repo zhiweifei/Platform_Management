@@ -558,11 +558,10 @@ function groupInterface(req) {
     this.getMidGroupUser = function(group){
         var skip = this.paramArray.skip.value;
         var limit = this.paramArray.limit.value;
-        console.log("this.paramArray",this.paramArray)
 
         return new Promise(function(resolve, reject){
                 var queryGroupUser = new AV.Query('GroupUserMap');
-                queryGroupUser.equalTo("Group", group);
+                queryGroupUser.equalTo("Group",  typeof group == 'undefined'?'':group);
                 queryGroupUser.include("User");
                 queryGroupUser.limit(limit);
                 queryGroupUser.skip(skip);
