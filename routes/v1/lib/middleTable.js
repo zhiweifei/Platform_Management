@@ -104,9 +104,9 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
     }
 
 /**
-     * 重写field2 acl
-     * @param request: 中间表数据对象
-     */
+ * 重写field2 acl
+ * @param request: 中间表数据对象
+ */
     var rewrite_aclByFiled1 = function (request) {
         var filed1_Object = request.object.get(that.filed1);
         var filed2_Object = request.object.get(that.filed2);
