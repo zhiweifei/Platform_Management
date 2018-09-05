@@ -614,10 +614,7 @@ function groupInterface(req) {
 
                 findValidUser(groupParams.user, '_User', 'username').then(function (objectUsers) {
                     //make sure all Users are right and findValidUser successfully
-                    if (groupParams.user == undefined || (objectUsers.length > 0 && objectUsers.length == groupParams.user.length)) {
-                    }
-                    else {
-                        // reject(new AV.Error(403, 'Invalid user'))
+                    if(typeof groupParams.user != 'undefined' && !(objectUsers.length > 0 && objectUsers.length == groupParams.user.length)) {
                         throw(new AV.Error(403, 'Invalid user'))
                     }
                 }).then(function(){
