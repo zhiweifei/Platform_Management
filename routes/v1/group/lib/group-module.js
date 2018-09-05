@@ -6,6 +6,9 @@ var async = require('async');
 var ArrayFindDifference = require('../../lib/ArrayFindDifference');
 var middleTable = require('../../lib/middleTable');
 
+/**
+*find valid users between param users 
+*/
 var findValidUser =  function (ArrParam,table,field) {
     var Query = new AV.Query(table);
     Query.containedIn(field, typeof ArrParam=='undefined'? []:ArrParam);
@@ -14,6 +17,9 @@ var findValidUser =  function (ArrParam,table,field) {
     });
 };
 
+/**
+* set group role acl to user
+*/
 var setGroupRoleToUserACL = function(newGroup, user){
     var groupid = newGroup.toJSON().objectId;
     return user.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
@@ -30,6 +36,9 @@ var setGroupRoleToUserACL = function(newGroup, user){
     })
 }
 
+/**
+*relate group to user
+*/
 var relate_GroupToUser = function (User,newGroup,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
     return findValidUser(User, '_User', 'username').then(function (objectUsers) {
@@ -54,6 +63,9 @@ var relate_GroupToUser = function (User,newGroup,sessionToken) {
     })
 };
 
+/**
+*relate user to group role
+*/
 var relate_UserToRole = function (User,ObjectId,admin) {
     var allUser;
     return new Promise(function (resolve, reject) {
@@ -83,6 +95,10 @@ var relate_UserToRole = function (User,ObjectId,admin) {
     })
 };
 
+/**
+*after build new group
+*build relative roles
+*/
 var buildNewGroupRole = function(request) {
     var setDataAcl = require('../../lib/setAcl');
     var GroupObjectId = request.id;
@@ -129,6 +145,9 @@ var buildNewGroupRole = function(request) {
     }
 }
 
+/**
+*build one group
+*/
 var buildUpOneGroup = function (currentBuild,sessionToken) {
 
     return new Promise(function (resolve,reject) {
@@ -158,6 +177,9 @@ var buildUpOneGroup = function (currentBuild,sessionToken) {
 
 };
 
+/**
+* reletion role to user
+*/
 var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admin,sessionToken){
     var buildObject = [];
     if(Array.isArray(admin)){
@@ -184,6 +206,9 @@ var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admi
     })
 }
 
+/**
+* deal with error
+*/
 var dealBuildGroupErr= function(error){
         console.error('AccessLink-Platform /group/post#  build up group error',error);
         if(error.hasOwnProperty('message')) {
@@ -214,6 +239,9 @@ var dealBuildGroupErr= function(error){
         }
 }
 
+/**
+*find delete user
+*/
 var find_delete_GroupUser = function (User,currentGroup,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
 
@@ -250,6 +278,9 @@ var find_delete_GroupUser = function (User,currentGroup,sessionToken) {
 
 };
 
+/**
+*deal with group
+*/
 var dealEachGroup = function (current,sessionToken) {
 
     return new Promise(function (resolve,reject) {
@@ -302,6 +333,9 @@ var dealEachGroup = function (current,sessionToken) {
     })
 };
 
+/**
+* deal with new relative user
+*/
 var dealNewUserArr = function (currentGroupObject,newUserArr,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
 
