@@ -6,20 +6,33 @@ var async = require('async');
 var ArrayFindDifference = require('../../lib/ArrayFindDifference');
 var middleTable = require('../../lib/middleTable');
 
+/**
+ * 从传参里找到正确的用户
+ * @param ArrParam: 参数里的user数组
+ * @param table: 查询的表格名
+ * @param field: 表格里要匹配的属性
+ */
 var findValidUser =  function (ArrParam,table,field) {
     var Query = new AV.Query(table);
-    Query.containedIn(field, ArrParam);
+    Query.containedIn(field, typeof ArrParam=='undefined'? []:ArrParam);
     return Query.find({"useMasterKey": true}).then(function (result) {
         return result
     });
 };
 
+/**
+ * 给组织关联用户设置组织管理员权限
+ * @param newGroup: 创建的新组织
+ * @param user: 关联用户
+ */
 var setGroupRoleToUserACL = function(newGroup, user){
     var groupid = newGroup.toJSON().objectId;
+    // 获取acl
     return user.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
         var userAcl = result.getACL();
         userAcl.setRoleReadAccess('group_admin_' + groupid, true);
         user.set('ACL',userAcl)
+        // 添上组织管理者acl
         return user.save(null,{'useMasterKey':true}).then(function()  {
             console.log("AccessLink-Platform /group# relate_GroupToUser set User ACL ok")
             return 
@@ -30,13 +43,21 @@ var setGroupRoleToUserACL = function(newGroup, user){
     })
 }
 
+
+/**
+ * 中间表里创建组织用户关联数据
+ * @param User: 关联用户
+ * @param newGroup: 创建的新组织
+ * @param sessionToken: 创建者的sessionToken
+ */
 var relate_GroupToUser = function (User,newGroup,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
-    return findValidUser(User, '_User', 'username', sessionToken).then(function (objectUsers) {
-        //make sure all Users are right and findValidUser successfully
+    return findValidUser(User, '_User', 'username').then(function (objectUsers) {
+        //验证传参的user是否有效的
         if (objectUsers.length > 0 && objectUsers.length == User.length) {
             return new Promise(function(resolve, reject){
                 async.map(objectUsers, function(current_user, callback){
+                    // 分别关联组织acl到user
                     setGroupRoleToUserACL(newGroup, current_user).then(function(){
                         var midNewData = GroupUserMap_middleTable.buildOneData(newGroup, current_user)
                         callback(null, midNewData)
@@ -54,10 +75,16 @@ var relate_GroupToUser = function (User,newGroup,sessionToken) {
     })
 };
 
-var relate_UserToRole = function (User,ObjectId,admin,sessionToken) {
+/**
+ * 组织role关联用户
+ * @param User: 关联用户
+ * @param 组织的ObjectId: ObjectId
+ * @param admin: 管理员类型
+ */
+var relate_UserToRole = function (User,ObjectId,admin) {
     var allUser;
     return new Promise(function (resolve, reject) {
-        findValidUser(User, '_User', 'username', sessionToken).then(function (objectUsers) {
+        findValidUser(User, '_User', 'username').then(function (objectUsers) {
             if(objectUsers.length >0){
                 allUser = objectUsers;
                 var roleQuery = new AV.Query(AV.Role);
@@ -83,6 +110,64 @@ var relate_UserToRole = function (User,ObjectId,admin,sessionToken) {
     })
 };
 
+/**
+ * 创建组织角色
+ * @param request: 创建的组织对象
+ */
+var buildNewGroupRole = function(request) {
+    var setDataAcl = require('../../lib/setAcl');
+    var GroupObjectId = request.id;
+    if(!GroupObjectId){
+        throw new AV.Cloud.Error('AccessLink-Platform cloud# Group afterSave No Group ObjectId!');
+    }
+    else{
+        // 创建组织管理员，普通管理员角色
+        var superRoleName = 'super_admin';
+        var newRole = AV.Object.extend('_Role');
+        var buildGroupRole = new newRole();
+        var newGroupRoleName = 'group_admin_' + GroupObjectId;
+        buildGroupRole.set('name',newGroupRoleName);
+        buildGroupRole.set('Group', request);
+        // 组织管理员角色设置acl
+        buildGroupRole.setACL(setDataAcl([superRoleName,newGroupRoleName]));
+        var buildGroupNormalRole = new newRole();
+        var newGroupNormalRoleName = 'admin_' + GroupObjectId;
+        buildGroupNormalRole.set('name',newGroupNormalRoleName);
+        buildGroupNormalRole.set('Group', request);
+        // 普通管理员角色设置acl
+        buildGroupNormalRole.setACL(setDataAcl([superRoleName,newGroupRoleName,newGroupNormalRoleName]));
+        var GroupObject = AV.Object.createWithoutData('Group', GroupObjectId);
+        var roleAcl = new AV.ACL();
+        roleAcl.setRoleWriteAccess(superRoleName, true);
+        roleAcl.setRoleReadAccess(superRoleName, true);
+        roleAcl.setRoleWriteAccess(newGroupRoleName, true);
+        roleAcl.setRoleReadAccess(newGroupRoleName, true);
+        roleAcl.setRoleReadAccess(newGroupNormalRoleName, true);
+        // 组织设置acl
+        GroupObject.set('ACL', roleAcl);
+        return AV.Object.saveAll([buildGroupRole,buildGroupNormalRole,GroupObject],{'useMasterKey':true}).then(function (result) {
+            console.log("AccessLink-Platform cloud# Group afterSave set new Group Role success");
+            //result[0] is group_admin role
+            //result[1] is admin role
+            result[1].getRoles().add(result[1]);
+            result[1].getRoles().add(result[0]);
+            result[0].getRoles().add(result[0]);
+            // 组织角色关联role
+            return AV.Object.saveAll([result[0],result[1]],{useMasterKey:true}).then(function(){
+                return request
+            })
+        }).catch(function (error) {
+            console.error("AccessLink-Platform cloud# Group afterSave set new Group Role failed",error)
+        });
+    }
+}
+
+
+/**
+ * 创建一个组织
+ * @param currentBuild: 创建当前组织请求的参数
+ * @param sessionToken: 调用api的用户的sessionToken
+ */
 var buildUpOneGroup = function (currentBuild,sessionToken) {
 
     return new Promise(function (resolve,reject) {
@@ -103,7 +188,7 @@ var buildUpOneGroup = function (currentBuild,sessionToken) {
             }
         }
         NewGroup.save(null,{'sessionToken': sessionToken}).then(function(NewGroupObject){
-            resolve([NewGroupObject,related_user])
+            resolve(NewGroupObject)
         }).catch(function(error){
             reject(error)
         })
@@ -112,15 +197,23 @@ var buildUpOneGroup = function (currentBuild,sessionToken) {
 
 };
 
+/**
+ * 用户关联组织和角色
+ * @param NewGroupObject: 新组织的对象
+ * @param group_user: 请求api参数中的user
+ * @param admin: 普通管理者组成的数组
+ * @param group_admin: 组织管理者组成的数组
+ * @param sessionToken: 调用api的用户的sessionToken
+ */
 var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admin,sessionToken){
     var buildObject = [];
     if(Array.isArray(admin)){
         buildObject.push(relate_GroupToUser(group_user, NewGroupObject, sessionToken));
-        buildObject.push(relate_UserToRole(admin, NewGroupObject.id, "admin_", sessionToken));
-        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_", sessionToken))
+        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"));
+        buildObject.push(relate_UserToRole(admin, NewGroupObject.id, "admin_"));
     }else{
         buildObject.push(relate_GroupToUser(group_user, NewGroupObject, sessionToken));
-        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_", sessionToken))  
+        buildObject.push(relate_UserToRole(group_admin, NewGroupObject.id, "group_admin_"))  
     }
     return Promise.all(buildObject).then(function (result) {
         var addObject = [];
@@ -138,6 +231,10 @@ var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admi
     })
 }
 
+/**
+ * 处理捕获的错误
+ * @param error: 捕获的错误
+ */
 var dealBuildGroupErr= function(error){
         console.error('AccessLink-Platform /group/post#  build up group error',error);
         if(error.hasOwnProperty('message')) {
@@ -168,13 +265,19 @@ var dealBuildGroupErr= function(error){
         }
 }
 
+/**
+ * 查找要删除的中间表GroupUserMap数据
+ * @param User: 当前组织中包含的指定用户
+ * @param currentGroup: 当前组织
+ * @param sessionToken: 调用api的用户的sessionToken
+ */
 var find_delete_GroupUser = function (User,currentGroup,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
 
     return new Promise(function (resolve,reject) {
         if(User.length > 0) {
             //get all users object by findValidUser function
-            findValidUser(User, '_User', 'username', sessionToken).then(function (objectUsers) {
+            findValidUser(User, '_User', 'username').then(function (objectUsers) {
                 async.map(objectUsers, function (currentUser, callback) {
                     // find the object which need to deleted in GroupUserMap table
                     GroupUserMap_middleTable.findData(currentGroup, currentUser).then(function (result) {
@@ -204,6 +307,12 @@ var find_delete_GroupUser = function (User,currentGroup,sessionToken) {
 
 };
 
+/**
+ * 查找要删除的中间表GroupUserMap数据
+ * @param User: 当前组织中包含的指定用户
+ * @param currentGroup: 当前组织
+ * @param sessionToken: 调用api的用户的sessionToken
+ */
 var dealEachGroup = function (current,sessionToken) {
 
     return new Promise(function (resolve,reject) {
@@ -215,6 +324,7 @@ var dealEachGroup = function (current,sessionToken) {
         //get group object by group name filed
         var GroupQuery = new AV.Query('Group');
         GroupQuery.equalTo('name',GroupOldName);
+        // 找到查询的组织
         GroupQuery.find({'sessionToken': sessionToken}).then(function (result) {
             if(result.length == 0){
                 reject(new AV.Error(404,'error,some group is not find'));
@@ -231,7 +341,7 @@ var dealEachGroup = function (current,sessionToken) {
             }
             addObject.push(currentGroupObject);
             if(Array.isArray(newUserArr))
-                dealObject.push(dealNewUserArr(currentGroupObject,newUserArr))
+                dealObject.push(dealNewUserArr(currentGroupObject,newUserArr, sessionToken))
             //judge whether newUserArr,groupInfo At least one
             if(typeof newUserArr == 'undefined' && typeof groupInfo == 'undefined' && 
                 typeof GroupNewName == 'undefined'){
@@ -256,6 +366,12 @@ var dealEachGroup = function (current,sessionToken) {
     })
 };
 
+/**
+ * 查找要删除的中间表GroupUserMap数据
+ * @param User: 当前组织中包含的指定用户
+ * @param currentGroup: 当前组织
+ * @param sessionToken: 调用api的用户的sessionToken
+ */
 var dealNewUserArr = function (currentGroupObject,newUserArr,sessionToken) {
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
 
@@ -366,6 +482,11 @@ function groupInterface(req) {
                     if(!val.user && !val.groupInfo){
                         throw new AV.Error(403,"error, params include user or groupInfo at least one")
                     }
+
+                    if(val.user && Object.prototype.toString.call(val.user)!="[object Array]"){
+                        throw new AV.Error(403,"Invalid user")
+                    }
+
                 });
                 break;
             case 'PUT':
@@ -489,28 +610,27 @@ function groupInterface(req) {
     this.buildAllGroup = function () {
         return new Promise(function (resolve,reject) {
             var postInfo = that.paramArray.body.value;
-            async.map(postInfo,function (current,callback) {
+            async.map(postInfo,function (groupParams,callback) {
 
-                findValidUser(current.user, '_User', 'username', that.sessionToken).then(function (objectUsers) {
+                findValidUser(groupParams.user, '_User', 'username').then(function (objectUsers) {
                     //make sure all Users are right and findValidUser successfully
-                    if (current.user == undefined || (objectUsers.length > 0 && objectUsers.length == current.user.length)) {
-                    }
-                    else {
-                        // reject(new AV.Error(403, 'Invalid user'))
+                    if(typeof groupParams.user != 'undefined' && !(objectUsers.length > 0 && objectUsers.length == groupParams.user.length)) {
                         throw(new AV.Error(403, 'Invalid user'))
                     }
                 }).then(function(){
-                    return buildUpOneGroup(current, that.sessionToken)
-                }).then(function(arr){
-                    var admin = arr[1];
+                    return buildUpOneGroup(groupParams, that.sessionToken)
+                }).then(function(request){
+                    return buildNewGroupRole(request)
+                }).then(function(group){
+                    var admin = groupParams.user;
                     var group_admin = [that.login_username];
                     var group_user;
                     if(Array.isArray(admin)){
-                        group_user = arr[1].concat(that.login_username);
+                        group_user = admin.concat(that.login_username);
                     }else{
                         group_user = [that.login_username]
                     }
-                    return relateGroupRoleToUser(arr[0],group_user,admin,group_admin, that.sessionToken)
+                    return relateGroupRoleToUser(group,group_user,admin,group_admin, that.sessionToken)
                 }).catch(function(error){
                     return dealBuildGroupErr(error)
                 }).then(function (result) {
