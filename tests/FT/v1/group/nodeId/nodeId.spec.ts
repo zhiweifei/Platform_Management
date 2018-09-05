@@ -202,7 +202,6 @@ describe('Get /v1/group/nodeId', () => {
 		let groupNameGet = new AppGET(devurl, groupNamePath, port)
 		groupNameGet.setSessionToken(sessionToken)
 		groupNameGet.GET(groupQuery,(data: any, statusCode: number) => {
-			console.log('Get /v1/group/nodeId testcase10# data',data);
 			data.forEach(function(val){
 				val.should.have.property("nodeId")
 			})
