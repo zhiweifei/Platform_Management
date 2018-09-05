@@ -58,7 +58,7 @@ describe('Get /v1/group/user', () => {
 		})
 	})
 
-	it.skip("testcase4# use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
+	it("testcase4# use limit 10 and skip 10 &  should return 10 group data with 10 skip", (done) => {
 		console.log("Get 20 data at first")
 		let groupQuery: GroupQueryParameter = {
 			name: 'test_group',
@@ -91,7 +91,7 @@ describe('Get /v1/group/user', () => {
 		groupNameGet1.setSessionToken(sessionToken)
 	})
 
-	it.skip("testcase5# Comprehensive test & should return data limit 10 with skip 10", (done) => {
+	it("testcase5# Comprehensive test & should return data limit 10 with skip 10", (done) => {
 		console.log("Get 20 data at first")
 		let dataA: any
 		let groupQuery: GroupQueryParameter = {

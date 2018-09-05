@@ -477,7 +477,7 @@ describe('Post /v1/group', () => {
 			})
 	})
 
-	it.skip("testcase11# create new group with name, many users, and groupInfo & should return 'success, relate to users successfully'", (done) => {
+	it("testcase11# create new group with name, many users, and groupInfo & should return 'success, relate to users successfully'", (done) => {
 		newGroup = [{
 			name: "testGroup_user",
 			user: ["test","testUser1","testUser2","testUser3","testUser4","testUser5"],
@@ -550,7 +550,7 @@ describe('Put /v1/group', () => {
 			})
 	})
 
-	it.skip("testcase4# update group with user & should return 201 status code", (done) => {
+	it("testcase4# update group with user & should return 201 status code", (done) => {
 		let updateGroup: Array<GroupPutParameter> = [{
 				name: "test_group",
 				user: ["test"]
@@ -566,7 +566,7 @@ describe('Put /v1/group', () => {
 			})
 	})
 
-	it.skip("testcase5# update group with already related user & should return 403 status code", (done) => {
+	it("testcase5# update group with already related user & should return 403 status code", (done) => {
 		let updateGroup: Array<GroupPutParameter> = [{
 			name: "test_group",
 			user: ["test"]
