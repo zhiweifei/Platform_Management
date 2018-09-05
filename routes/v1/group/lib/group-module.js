@@ -51,6 +51,11 @@ var setGroupRoleToUserACL = function(newGroup, user){
  * @param sessionToken: 创建者的sessionToken
  */
 var relate_GroupToUser = function (User,newGroup,sessionToken) {
+    if(User.length ==0){
+        return new Promise(function(resolve, reject){
+            resolve([])
+        })
+    }
     var GroupUserMap_middleTable = new middleTable('GroupUserMap','Group','User',sessionToken);
     return findValidUser(User, '_User', 'username').then(function (objectUsers) {
         //验证传参的user是否有效的
