@@ -103,26 +103,24 @@ function middleTable(tableName,filed1,filed2,sessionToken,useMasterKey) {
 
     }
 
+/**
+* rewrite field2 acl
+*/
     var rewrite_aclByFiled1 = function (request,filed1TableName) {
-        var filed1_Object = request.object.get(that.filed1);
         var filed2_Object = request.object.get(that.filed2);
-        var filed1_TableQuery = new AV.Query(filed1TableName);
-        return filed1_TableQuery.get(filed1_Object.id,{useMasterKey:true}).then(function (result) {
-            console.log('delete' + that.tableName + 'data by' + that.filed2);
-            return filed2_Object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
-                var filed2_ACL_Json = result.getACL();
-                var alc_UseJson = filed2_ACL_Json['permissionsById'];
-                var resultJsonObject = {};
-                for (var attr in alc_UseJson) {
-                    // rewrite acl
-                    if(!(attr == 'role:group_admin_' + filed1_Object.id || attr == filed1_Object.id)){
-                        resultJsonObject[attr] = alc_UseJson[attr];
-                    }
+        return filed2_Object.fetch({'includeACL':true},{'useMasterKey':true}).then(function (result) {
+            var filed2_ACL_Json = result.getACL();
+            var alc_UseJson = filed2_ACL_Json['permissionsById'];
+            var resultJsonObject = {};
+            for (var attr in alc_UseJson) {
+                // rewrite acl
+                if(!(attr == 'role:group_admin_' + filed1_Object.id || attr == filed1_Object.id)){
+                    resultJsonObject[attr] = alc_UseJson[attr];
                 }
-                filed2_Object.set('ACL',resultJsonObject);
-                return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
-                    console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave set ACL ok");
-                })
+            }
+            filed2_Object.set('ACL',resultJsonObject);
+            return filed2_Object.save(null,{'useMasterKey':true}).then(function() {
+                console.log("AccessLink-Platform cloud#" + that.tableName + "afterSave set ACL ok");
             })
         }).catch(function (error) {
             console.error('rewrite ' + that.filed2 + " acl error " + error)
