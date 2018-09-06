@@ -358,7 +358,7 @@ describe('Post /v1/group', () => {
 				groupPost.POST(newGroup,
 					(data: any, statusCode: number) => {
 						statusCode.should.equal(403)
-						data.should.equal("The group name is occupied")
+						data.should.equal("A unique field was given a value that is already taken.")
 						done()
 					})
 			})
