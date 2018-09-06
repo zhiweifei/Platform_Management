@@ -8,7 +8,6 @@ var router = require('express').Router();
 var cors = require('cors');
 var corsOptions = {
     origin: function(origin, callback){
-        console.log("User#  origin:"+origin);
         var originIsWhitelisted = true;
         callback(originIsWhitelisted ? null : 'Bad Request', originIsWhitelisted);
     }
