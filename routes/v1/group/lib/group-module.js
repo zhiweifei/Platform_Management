@@ -67,7 +67,7 @@ var relate_GroupToUser = function (User,newGroup,sessionToken) {
                         var midNewData = GroupUserMap_middleTable.buildOneData(newGroup, current_user)
                         callback(null, midNewData)
                     },function(err){
-                        throw err
+                        reject(err)
                     })
                 },function(err, result){
                     resolve(result)
@@ -105,12 +105,7 @@ var relate_UserToRole = function (User,ObjectId,admin) {
             relation.add(allUser);
             resolve([administratorRole]);
         }).catch(function (error) {
-            if(error.hasOwnProperty('message')){
-                reject(new AV.Error(403, 'Invalid user'))
-            }
-            else {
-                reject(new AV.Error(401, 'there is a server error'))
-            }
+            reject(error)
         });
     })
 };
@@ -241,33 +236,27 @@ var relateGroupRoleToUser = function (NewGroupObject,group_user,admin,group_admi
  * @param error: 捕获的错误
  */
 var dealBuildGroupErr= function(error){
-        console.error('AccessLink-Platform /group/post#  build up group error',error);
-        if(error.hasOwnProperty('message')) {
-            if (error.message.indexOf('A unique field was given a value that is already taken') > -1) {
-                throw(new AV.Error(403, 'The group name is occupied'));
-            }
-            else if (error.message.indexOf("Invalid value type for field 'name'") > -1) {
-                throw(new AV.Error(403, 'Invalid group name'));
-            }
-            else if (error.message.indexOf("Invalid value type for field 'groupInfo'") > -1) {
-                throw(new AV.Error(403, 'Invalid groupInfo'));
-            }
-            else if (error.message.indexOf('Forbidden to create by class') > -1) {
-                throw(new AV.Error(401, 'no authority to build up group'));
-            }
-            else if (error.message.indexOf('this middle table data already exist') > -1) {
-                throw(new AV.Error(401,'this group have already relate to these users'))
-            }
-            else if(error.message.indexOf('Invalid user')>-1){
-                throw(new AV.Error(403, 'Invalid user'));
-            }
-            else {
-                throw(new AV.Error(401, 'there is a server error'));
-            }
-        }
-        else{
-            throw(new AV.Error(401, 'there is a server error'));
-        }
+    console.error('AccessLink-Platform /group/post#  build up group error',error);
+    if(!error['message']){
+        error['message'] = error['rawMessage']
+    }
+    
+    // 错误信息中去掉leancloud信息
+    error['message'] = error['message'].replace(/\[[^\)]*\]/g,"").trim();
+
+    // 对leancloud特定错误信息的特殊处理
+    if (error['message'].indexOf('A unique field was given a value that is already taken') > -1) {
+        throw(new AV.Error(403, 'The group name is occupied'));
+    }
+    else if (error['message'].indexOf('Forbidden to create by class') > -1) {
+        throw(new AV.Error(401, 'no authority to build up group'));
+    }
+
+    // 对leancloud异常错误码的特殊处理
+    if(error['code'] < 200 || error['code'] > 600){
+        error['code'] = 403
+    }
+    throw(new AV.Error(error['code'], error['message']));
 }
 
 /**
@@ -490,6 +479,14 @@ function groupInterface(req) {
 
                     if(val.user && Object.prototype.toString.call(val.user)!="[object Array]"){
                         throw new AV.Error(403,"Invalid user")
+                    }
+
+                    if(val.name && Object.prototype.toString.call(val.name)!="[object String]"){
+                        throw new AV.Error(403,"Invalid group name")
+                    }
+
+                    if(val.groupInfo && Object.prototype.toString.call(val.groupInfo)!="[object String]"){
+                        throw new AV.Error(403,"Invalid groupInfo")
                     }
 
                 });

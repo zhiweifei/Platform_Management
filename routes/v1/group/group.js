@@ -5,7 +5,6 @@ var cors = require('cors');
 var request=require('request');
 var corsOptions = {
 	origin: function(origin, callback){
-		console.log("Group# origin:"+origin);
 		var originIsWhitelisted = true;
 		callback(originIsWhitelisted ? null : 'Bad Request', originIsWhitelisted);
 	}
