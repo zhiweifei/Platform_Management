@@ -358,7 +358,7 @@ describe('Post /v1/group', () => {
 					(data: any, statusCode: number) => {
 						console.log('Post /v1/group testcase3# data',data);
 						statusCode.should.equal(403)
-						data.should.equal("A unique field was given a value that is already taken.")
+						data.should.equal("The group name is occupied")
 						done()
 					})
 			})

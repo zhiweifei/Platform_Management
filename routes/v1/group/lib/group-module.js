@@ -240,7 +240,19 @@ var dealBuildGroupErr= function(error){
     if(!error['message']){
         error['message'] = error['rawMessage']
     }
+    
+    // 错误信息中去掉leancloud信息
     error['message'] = error['message'].replace(/\[[^\)]*\]/g,"").trim();
+
+    // 对leancloud特定错误信息的特殊处理
+    if (error['message'].indexOf('A unique field was given a value that is already taken') > -1) {
+        throw(new AV.Error(403, 'The group name is occupied'));
+    }
+    else if (error['message'].indexOf('Forbidden to create by class') > -1) {
+        throw(new AV.Error(401, 'no authority to build up group'));
+    }
+
+    // 对leancloud异常错误码的特殊处理
     if(error['code'] < 200 || error['code'] > 600){
         error['code'] = 403
     }
