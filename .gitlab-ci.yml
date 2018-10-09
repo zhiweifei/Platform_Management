@@ -2,7 +2,6 @@ image: registry.cn-hangzhou.aliyuncs.com/handsometech/leancloud:1.6
 stages:
     - build
     - test-deploy
-    - test
     - deploy
 cache:
     paths:
@@ -19,8 +18,6 @@ test-deploy:
         - autologin.expect
         - lean deploy
         
-test:
-    stage: test
     
 deploy:
     stage: deploy
