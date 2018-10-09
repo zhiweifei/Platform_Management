@@ -23,7 +23,7 @@ test-deploy:
 test:
     stage: test
     script:
-        - cnpm test
+        //- cnpm test
 deploy:
     stage: deploy
     script:
