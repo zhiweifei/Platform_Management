@@ -18,10 +18,10 @@ test-deploy:
         - autologin.expect
         - lean deploy
         
-    
+  
+image: registry.cn-qingdao.aliyuncs.com/feizhiwei/test
 deploy:
     stage: deploy
     script:
-        - docker build -t registry.cn-hangzhou.aliyuncs.com/handsometech/leancloud:1.6
         - autologin.expect
         - lean deploy
