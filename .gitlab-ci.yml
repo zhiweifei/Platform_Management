@@ -3,7 +3,7 @@ stages:
     - build
     - test-deploy
     - test
-
+    - deploy
 cache:
     paths:
     - node_modules/
@@ -21,5 +21,10 @@ test-deploy:
         
 test:
     stage: test
+    
+deploy:
+    stage: deploy
     script:
-        - cnpm test        
+        - docker build -t registry.cn-hangzhou.aliyuncs.com/handsometech/leancloud:1.6
+        - autologin.expect
+        - lean deploy
